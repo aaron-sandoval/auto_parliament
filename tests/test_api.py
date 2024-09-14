@@ -1,0 +1,16 @@
+import os
+from openai import OpenAI
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+def test_gen_text_single():
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {
+                "role": "user",
+                "content": "Write a haiku about recursion in programming."
+            }
+        ]
+    )
+    print(completion.choices[0].message)
