@@ -61,4 +61,4 @@ chat_history: ChatResult = agents[names[0]].initiate_chat(
 )
 
 print(chat_history)
-log_chat_history(chat_history)
+log_chat_history(chat_history, agents)
