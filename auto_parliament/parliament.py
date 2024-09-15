@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from autogen import AssistantAgent, ChatResult
 
+from log_utils import log_chat_history
+
 
 # Config options for all agents
 n_agents = 2
@@ -46,7 +48,7 @@ for i in range(n_agents):
         system_message=system_prompts[i],
     )
 
-transcript = pd.DataFrame(columns=["sender", "message"])
+# transcript = pd.DataFrame(columns=["sender", "message"])
 
 # the assistant receives a message from the user, which contains the task description
 chat_history: ChatResult = agents[names[0]].initiate_chat(
@@ -56,3 +58,4 @@ chat_history: ChatResult = agents[names[0]].initiate_chat(
 )
 
 print(chat_history)
+log_chat_history(chat_history)
