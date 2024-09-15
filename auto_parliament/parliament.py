@@ -10,9 +10,9 @@ from log_utils import log_chat_history
 n_agents = 2
 n_rounds_before_vote = 2
 # Can extend `config_list` to use differrent models for different agents
-config_list = [{"model": "gpt-4o-mini", "temperature": 0.3, "api_key": os.environ["OPENAI_API_KEY"]}]
-human_input_mode = "TERMINATE"
-topic = ""
+config_list = [{"model": "gpt-4o-mini", "temperature": 0.7, "api_key": os.environ["OPENAI_API_KEY"]}]
+human_input_mode = "NEVER"
+topic = "Should smoking tobacco be banned in all public places in India starting in 2026?"
 
 # Config options: Agent-specific
 beliefs = [
@@ -34,7 +34,7 @@ system_prompts = [
     The UNMP is currently deciding on an issue. 
     UNMP decisions are made according to the following procedure:\n
     1. A topic of discussion is introduced.\n
-    2. 
+    2. Each UNMP member gets {n_rounds_before_vote} chances to speak in the discussion, visible to all participants.
     """
                   for b, name, desc in zip(beliefs, names, agent_descriptions)]
 
@@ -53,7 +53,7 @@ for i in range(n_agents):
 # the assistant receives a message from the user, which contains the task description
 chat_history: ChatResult = agents[names[0]].initiate_chat(
     agents[names[1]],
-    message="""What do you think about mp3's reputation?""",
+    message=topic,
     max_turns=2
 )
 
