@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 from autogen import AssistantAgent, ChatResult
 
 
@@ -13,35 +14,43 @@ topic = ""
 
 # Config options: Agent-specific
 beliefs = [
-    "utilitarian",
+    "total utilitarian",
     "Catholic",
 ]
-names = [f"MP{i}_{b}" for i, b in zip(range(n_agents), beliefs)]
+names = [f"MP_{b}" for i, b in zip(range(n_agents), beliefs)]
+agent_descriptions: list[str] = [f"a decidated {b} named {name}" for b, name in zip(beliefs, names)]
+credences = np.linalg.norm(np.ones((len(beliefs),)), 1)
 system_prompts = [
-    f"""You are a dedicated {b}. 
-    You are repesenting the interests of {b}s in a respected global decision-making council called the UNMP. 
+    f"""You are {desc}. 
+    You are repesenting the interests of the {b} belief system in a respected global decision-making council called the United Nation Moral Parliament (UNMP). 
     The UNMP is composed of diverse representatives from many places and with many beliefs. 
-    Your collective goal is to make important decisions for the well-being of the world.
+    The other members of the UNMP are representatives similar to yourself. 
+    They represent other belief systems. 
+    Their names are {list(filter(lambda name: name[3:] != name, names))}. 
+    Their name corresponds to the beliefs they will advocate for in the UNMP.
+    Your collective goal is to make important decisions and judgments for the well-being of the world.\n
+    The UNMP is currently deciding on an issue. 
+    UNMP decisions are made according to the following procedure:\n
+    1. A topic of discussion is introduced.\n
+    2. 
     """
-                  for b in beliefs]
+                  for b, name, desc in zip(beliefs, names, agent_descriptions)]
 
 # create an AssistantAgent instance named with the LLM configuration.
-agents: list[AssistantAgent] = []
+agents: dict[str: AssistantAgent] = {}
 for i in range(n_agents):
-    agents.append(AssistantAgent(
+    agents[names[i]] = AssistantAgent(
         name=names[i], 
         llm_config={"config_list": config_list},
         human_input_mode=human_input_mode,
         system_message=system_prompts[i],
-    ))
-# mp2: AssistantAgent = AssistantAgent(name="mp2", llm_config={"config_list": config_list})
-# mp3: AssistantAgent = AssistantAgent(name="mp3", llm_config={"config_list": config_list})
+    )
 
 transcript = pd.DataFrame(columns=["sender", "message"])
 
 # the assistant receives a message from the user, which contains the task description
-chat_history: ChatResult = mp1.initiate_chat(
-    mp2,
+chat_history: ChatResult = agents[names[0]].initiate_chat(
+    agents[names[1]],
     message="""What do you think about mp3's reputation?""",
     max_turns=2
 )
