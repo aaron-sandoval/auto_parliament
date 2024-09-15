@@ -8,7 +8,7 @@ from copy import deepcopy
 
 def log_chat_history(chat_history: ChatResult, agents: Sequence[AssistantAgent], filename: str | None = None, file_suffix: str | None = None) -> dict:
     if filename is None:
-        filename = "".join([datetime.now().strftime('%Y-%m-%d-%H%M'), f"_{file_suffix}" if file_suffix is not None else "", ".json"])
+        filename = "".join([datetime.now().strftime('%Y-%m-%d-%H%M%S'), f"_{file_suffix}" if file_suffix is not None else "", ".json"])
     filename = Path(".")/"data"/"chat_logs"/filename
     log = {
         "timestamp": datetime.now().strftime('%Y-%m-%d-%H:%M'),
