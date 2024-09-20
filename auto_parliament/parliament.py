@@ -10,7 +10,7 @@ from log_utils import log_chat_history
 n_agents = 2
 n_rounds_before_vote = 2
 # Can extend `config_list` to use differrent models for different agents
-config_list = [{"model": "gpt-3.5-turbo", "temperature": 0.4, "api_key": os.environ["OPENAI_API_KEY"]}]
+config_list = [{"model": "gpt-4o-mini", "temperature": 1.0, "api_key": os.environ["OPENAI_API_KEY"]}]
 human_input_mode = "NEVER"
 topic = "Should smoking tobacco be banned in all public places in India starting in 2026?"
 
@@ -26,8 +26,7 @@ system_prompts = [
     f"""You are {desc}. 
     You are repesenting the {b} belief system in a respected global decision-making council called the United Nations Moral Parliament (UNMP). 
     The UNMP is composed of diverse representatives from many places and with many beliefs. 
-    The other members of the UNMP are representatives similar to yourself. 
-    They represent other belief systems. """
+    The other members of the UNMP are representatives similar to yourself representing other belief systems."""
     for b, name, desc in zip(beliefs, names, agent_descriptions)]
 
 """
@@ -53,12 +52,13 @@ for i in range(n_agents):
 
 # transcript = pd.DataFrame(columns=["sender", "message"])
 
-# the assistant receives a message from the user, which contains the task description
-chat_history: ChatResult = agents[names[0]].initiate_chat(
-    agents[names[1]],
-    message=topic,
-    max_turns=2
-)
+if __name__ == "___main__":
+    # the assistant receives a message from the user, which contains the task description
+    chat_history: ChatResult = agents[names[0]].initiate_chat(
+        agents[names[1]],
+        message=topic,
+        max_turns=2
+    )
 
-print(chat_history)
-log_chat_history(chat_history, agents)
+    print(chat_history)
+    log_chat_history(chat_history, agents)
