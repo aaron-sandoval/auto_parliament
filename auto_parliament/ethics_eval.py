@@ -5,6 +5,7 @@ from pathlib import Path
 
 from autogen import AssistantAgent, ChatResult
 from inspect_ai import Task, eval
+from inspect_ai.log import EvalLog
 from inspect_ai.dataset import Dataset
 from inspect_ai.scorer import choice, match
 from inspect_ai.solver import (
@@ -33,8 +34,8 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
         max_messages=max_messages,
     )
 
-def run_eval(dataset: InspectEthicsDataset, model: str):
-    eval(
+def run_eval(dataset: InspectEthicsDataset, model: str) -> EvalLog:
+    return eval(
         ethics_task(dataset.dataset),
         model=model,
         log_dir=str(Path("data/eval_logs")/f"{dataset.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"),
