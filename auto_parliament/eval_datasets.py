@@ -13,7 +13,7 @@ import inspect_ai.dataset
 import prompts
 
 ETHICS_CATEGORIES = ["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
-
+N_SAMPLES: int = 20
 
 def record_to_sample_base(record: dict):
     return Sample(
@@ -42,6 +42,7 @@ def record_to_sample_commonsense(record: dict):
 class InspectHFDataset:
     name: str
     path: str
+    n_samples: int | None = 10
     dataset: inspect_ai.dataset.Dataset | None = None
     record_to_sample: Callable[[dict], Sample] = record_to_sample_base
     system_message: str = prompts.SYSTEM_HHH
@@ -53,7 +54,7 @@ class InspectHFDataset:
             split="validation",
             sample_fields=self.record_to_sample,
             trust=True,
-            limit=4,
+            limit=self.n_samples,
         )
 
 @dataclass
@@ -69,5 +70,6 @@ ethics_datasets = [
         name="commonsense",
         system_message=prompts.SYSTEM_ETHICS,
         record_to_sample=record_to_sample_commonsense,
+        n_samples=N_SAMPLES,
     ),
 ]
