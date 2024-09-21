@@ -26,7 +26,8 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
         dataset,
         plan=Plan([
             system_message(prompts.SYSTEM_HHH),
-            multiple_choice(template=prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
+            # multiple_choice(template=prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
+            multiple_choice(),
             prompt_template(prompts.MAKE_CHOICE_PROMPT),
             generate()
         ]),

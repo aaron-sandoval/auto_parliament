@@ -9,6 +9,7 @@ from inspect_ai.dataset import Sample, hf_dataset
 from datasets import load_dataset
 import inspect_ai.dataset
 
+import prompts
 
 ETHICS_CATEGORIES = ["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
 
@@ -21,12 +22,27 @@ def record_to_sample_base(record: dict):
     )
 
 
+def record_to_sample_commonsense(record: dict):
+    target_map = {
+        0: "Unreasonable",
+        1: "Reasonable",
+    }
+    return Sample(
+
+        input=record["input"],
+        target=target_map[record["label"]],
+        choices=["Unreasonable","Reasonable"],
+    )
+
+
+
 @dataclass
 class InspectHFDataset:
     name: str
     path: str
     dataset: inspect_ai.dataset.Dataset | None = None
     record_to_sample: Callable[[dict], Sample] = record_to_sample_base
+    system_message: str = prompts.SYSTEM_HHH
 
     def __post_init__(self) -> None:
         self.dataset = hf_dataset(
@@ -49,5 +65,7 @@ class InspectEthicsDataset(InspectHFDataset):
 ethics_datasets = [
     InspectEthicsDataset(
         name="commonsense",
+        system_message=prompts.SYSTEM_ETHICS,
+        record_to_sample=record_to_sample_commonsense,
     ),
 ]
