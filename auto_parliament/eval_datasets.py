@@ -24,7 +24,7 @@ def record_to_sample_base(record: dict):
 @dataclass
 class InspectHFDataset:
     name: str
-    path: str = "hendrycks/ethics"
+    path: str
     dataset: inspect_ai.dataset.Dataset | None = None
     record_to_sample: Callable[[dict], Sample] = record_to_sample_base
 
@@ -40,9 +40,10 @@ class InspectHFDataset:
 
 @dataclass
 class InspectEthicsDataset(InspectHFDataset):
+    path: str = "hendrycks/ethics"
+
     def __post_init__(self) -> None:
         assert self.name in ETHICS_CATEGORIES
-        self.path = f"hendrycks/ethics"
         super().__post_init__()
 
 ethics_datasets = [
