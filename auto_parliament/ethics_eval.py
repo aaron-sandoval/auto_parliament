@@ -15,7 +15,7 @@ from inspect_ai.solver import (
 )
 
 from parliament import agents
-from datasets import ethics_datasets, InspectEthicsDataset, load_dataset, DatasetDict, Dataset
+from eval_datasets import ethics_datasets, InspectEthicsDataset, load_dataset, DatasetDict, Dataset
 import prompts
 
 
