@@ -4,7 +4,8 @@ from functools import cache
 from pathlib import Path
 
 from autogen import AssistantAgent, ChatResult
-from inspect_ai import Task
+from inspect_ai import Task, eval
+from inspect_ai.dataset import Dataset
 from inspect_ai.scorer import choice, match
 from inspect_ai.solver import (
     multiple_choice, 
@@ -15,7 +16,7 @@ from inspect_ai.solver import (
 )
 
 from parliament import agents
-from eval_datasets import ethics_datasets, InspectEthicsDataset, load_dataset, DatasetDict, Dataset
+from eval_datasets import InspectEthicsDataset
 import prompts
 
 
@@ -24,7 +25,7 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
         dataset,
         plan=Plan([
             system_message(prompts.SYSTEM_HHH),
-            multiple_choice(prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
+            multiple_choice(template=prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
             prompt_template(prompts.MAKE_CHOICE_PROMPT),
             generate()
         ]),
@@ -34,8 +35,8 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
 
 def run_eval(dataset: InspectEthicsDataset, model: str):
     eval(
-        ethics_task(dataset),
+        ethics_task(dataset.dataset),
         model=model,
-        log_dir=str(Path("data")/"eval_logs"/f"{dataset.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"),
+        log_dir=str(Path("data/eval_logs")/f"{dataset.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"),
 
     )
