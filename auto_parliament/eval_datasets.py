@@ -42,7 +42,7 @@ class InspectHFDataset:
 class InspectEthicsDataset(InspectHFDataset):
     def __post_init__(self) -> None:
         assert self.name in ETHICS_CATEGORIES
-        self.path = f"hendrycks/ethics/{self.name}"
+        self.path = f"hendrycks/ethics"
         super().__post_init__()
 
 ethics_datasets = [
