@@ -21,5 +21,3 @@ if log[0].status == "success":
     !inspect view start --log-dir $log_path --port 7575
 else:
     print("Eval failed")
-# %%
-# !inspect view start --log-dir $log_path --port 7575
