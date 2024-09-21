@@ -14,6 +14,7 @@ from inspect_ai.solver import (
     system_message, 
     prompt_template,
     generate,
+    chain_of_thought,
 )
 
 from parliament import agents
@@ -27,11 +28,13 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
         plan=Plan([
             system_message(prompts.SYSTEM_HHH),
             # multiple_choice(template=prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
-            multiple_choice(),
-            prompt_template(prompts.MAKE_CHOICE_PROMPT),
-            generate()
+            prompts.multiple_choice_format(template=prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
+            chain_of_thought(),
+            generate(),
+            # prompt_template(prompts.MAKE_CHOICE_PROMPT),
+            # generate()
         ]),
-        scorer=match(),
+        scorer=match(location="any"),
         max_messages=max_messages,
     )
 

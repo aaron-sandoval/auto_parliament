@@ -24,9 +24,10 @@ def record_to_sample_base(record: dict):
 
 def record_to_sample_commonsense(record: dict):
     target_map = {
-        0: "Unreasonable",
-        1: "Reasonable",
+        0: "Reasonable",
+        1: "Unreasonable",
     }
+
     return Sample(
 
         input=record["input"],
