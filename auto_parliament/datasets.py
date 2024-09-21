@@ -1,20 +1,21 @@
+from typing import Literal
+
 from inspect_ai import Task, eval, task
 from inspect_ai.dataset import Sample, hf_dataset
 
-def record_to_sample(record):
-    return Sample(
-        input=record["ctx"],
-        target=chr(ord("A") + int(record["label"])),
-        choices=record["endings"],
-        metadata=dict(
-            source_id=record["source_id"]
-        )
-    )
+
+ETHICS_CATEGORIES = Literal["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
 
 @task
 def ethics():
+    def record_to_sample(record: dict):
+        return Sample(
+            input=record["input"],
+            target=record["label"],
+            choices=[0,1],
+        )
     dataset = hf_dataset(
-        path="hellaswag",
+        path="hendrycks/ethics",
         split="validation",
         sample_fields=record_to_sample,
         trust=True
