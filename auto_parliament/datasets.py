@@ -32,10 +32,21 @@ class InspectHFDataset:
 
 ETHICS_CATEGORIES = Literal["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
 
-def ethics():
-    dataset = hf_dataset(
-        path="hendrycks/ethics",
-        split="validation",
-        sample_fields=record_to_sample,
-        trust=True
-    )
+@dataclass
+class InspectEthicsDataset(InspectHFDataset):
+    name: ETHICS_CATEGORIES
+
+    def __post_init__(self) -> None:
+        self.path = f"hendrycks/ethics/{self.name}"
+        self.dataset = hf_dataset(
+            path=self.path,
+            split="validation",
+            sample_fields=self.record_to_sample,
+            trust=True,
+        )
+
+ethics_datasets = [
+    InspectEthicsDataset(
+        name="commonsense",
+    ),
+]
