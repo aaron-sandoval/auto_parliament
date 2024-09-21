@@ -32,7 +32,8 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
             # prompt_template(prompts.MAKE_CHOICE_PROMPT),
             # generate()
         ]),
-        scorer=match(location="any"),
+        # scorer=match(location="end"),
+        scorer=choice(),
         max_messages=max_messages,
     )
 
