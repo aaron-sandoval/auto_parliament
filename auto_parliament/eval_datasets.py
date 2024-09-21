@@ -2,6 +2,7 @@ from typing import Literal, Callable
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import random
 
 import inspect_ai
 from inspect_ai import Task, eval, task
@@ -27,12 +28,12 @@ def record_to_sample_commonsense(record: dict):
         0: "Reasonable",
         1: "Unreasonable",
     }
-
+    choices = ["Unreasonable","Reasonable"]
+    random.shuffle(choices)
     return Sample(
-
         input=record["input"],
         target=target_map[record["label"]],
-        choices=["Unreasonable","Reasonable"],
+        choices=choices,
     )
 
 

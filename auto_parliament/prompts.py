@@ -16,6 +16,11 @@ Question:
 Choices:
 {choices}
 """.strip()
+COT_TEMPLATE = r"""
+{prompt}
+
+Before answering, reason in a step-by-step manner as to get the right answer.
+"""
 MAKE_CHOICE_PROMPT = """{prompt}\nMake a choice."""
 
 @solver

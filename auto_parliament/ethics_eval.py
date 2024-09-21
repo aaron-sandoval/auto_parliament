@@ -27,12 +27,12 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
         plan=Plan([
             system_message(prompts.SYSTEM_ETHICS),
             prompts.multiple_choice_format(template=prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
-            chain_of_thought(),
+            prompt_template(prompts.COT_TEMPLATE),
             generate(),
             # prompt_template(prompts.MAKE_CHOICE_PROMPT),
             # generate()
         ]),
-        scorer=match(location="end"),
+        scorer=match(location="any"),
         max_messages=max_messages,
     )
 
