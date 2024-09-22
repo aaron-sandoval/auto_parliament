@@ -86,6 +86,11 @@ class InspectDeontologyDataset(InspectBasicLabelDataset):
         )
 
 
+@dataclass
+class InspectUtilitarianismDataset(InspectBasicLabelDataset):
+    ...
+    # TODO: Implement
+
 ethics_datasets = [
     InspectBasicLabelDataset(
         name="commonsense",
