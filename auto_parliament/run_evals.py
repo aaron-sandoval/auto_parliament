@@ -10,8 +10,6 @@ from ethics_eval import run_eval
 from eval_datasets import ethics_datasets
 from single_llms import inspect_models
 
-models = ["openai/gpt-4o-mini"]
-
 # %%
 dataset_model_combos = itertools.product(ethics_datasets, inspect_models)
 for dataset, model in dataset_model_combos:

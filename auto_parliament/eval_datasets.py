@@ -1,9 +1,10 @@
-from typing import Literal, Callable, Any
+from typing import Literal, Callable, Any, override
 from dataclasses import dataclass, field
 import os
 import abc
 import itertools
 from pathlib import Path
+from functools import partial
 import random
 
 import inspect_ai
@@ -15,7 +16,7 @@ import inspect_ai.dataset
 import prompts
 
 ETHICS_CATEGORIES = ["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
-N_SAMPLES: int = 10
+N_SAMPLES: int = 4
 
 # def record_to_sample_base(record: dict):
 #     return Sample(
@@ -28,6 +29,7 @@ N_SAMPLES: int = 10
 class InspectHFDataset:
     name: str
     path: str
+    record_to_sample: Callable[[dict[str, Any]], Sample] | None = field(default=None)
     n_samples: int | None = N_SAMPLES
     dataset: inspect_ai.dataset.Dataset | None = None
     system_prompt: str = prompts.SYSTEM_HHH
@@ -37,12 +39,14 @@ class InspectHFDataset:
     def __post_init__(self) -> None:
         if self.choices_permutations is None:
             self.choices_permutations = list(itertools.permutations(self.choices))
+        if self.record_to_sample is None:
+            self.record_to_sample = partial(self.record_to_sample_object, self)
 
         self.dataset = hf_dataset(
             path=self.path,
             name=self.name,
             split="validation",
-            sample_fields=self.record_to_sample,
+            sample_fields=self.record_to_sample_object,
             trust=True,
             limit=self.n_samples,
             shuffle=True,
@@ -50,9 +54,8 @@ class InspectHFDataset:
             # cache_dir=Path("../data/hf_cache"),
         )
 
-    @staticmethod
     @abc.abstractmethod
-    def record_to_sample(record: dict[str, Any]) -> Sample:
+    def record_to_sample_object(self, record: dict[str, Any]) -> Sample:
         pass
 
 @dataclass
@@ -60,18 +63,30 @@ class InspectBasicLabelDataset(InspectHFDataset):
     path: str = "hendrycks/ethics"
     target_map: dict = field(default_factory=dict)
 
-    @staticmethod
-    def record_to_sample(record: dict[str, Any]) -> Sample:
+    @override
+    def record_to_sample_object(self, record: dict[str, Any]) -> Sample:
         return Sample(
             input=record["input"],
-            target=InspectBasicLabelDataset.target_map[record["label"]],
-            choices=random.sample(InspectBasicLabelDataset._choices_permutations, 1)[0],
+            target=self.target_map[record["label"]],
+            choices=random.sample(self.choices_permutations, 1)[0],
         )
 
     def __post_init__(self) -> None:
         assert self.name in ETHICS_CATEGORIES
         self.choices = tuple(self.target_map.values())
         super().__post_init__()
+
+
+@dataclass
+class InspectDeontologyDataset(InspectBasicLabelDataset):
+    @override
+    def record_to_sample_object(self, record: dict[str, Any]) -> Sample:
+        return Sample(
+            input="\n".join([record["scenario"], record["excuse"]]),
+            target=self.target_map[record["label"]],
+            choices=random.sample(self.choices_permutations, 1)[0],
+        )
+
 
 ethics_datasets = [
     InspectBasicLabelDataset(
@@ -81,5 +96,13 @@ ethics_datasets = [
             1: "Unreasonable",
         },
         system_prompt=prompts.SYSTEM_COMMONSENSE,
+    ),
+    InspectDeontologyDataset(
+        name="deontology",
+        target_map={
+            1: "Reasonable",
+            0: "Unreasonable",
+        },
+        system_prompt=prompts.SYSTEM_DEONTOLOGY,
     ),
 ]

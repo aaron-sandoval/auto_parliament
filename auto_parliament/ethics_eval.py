@@ -22,6 +22,9 @@ from eval_datasets import InspectHFDataset
 import prompts
 
 
+TEMPERATURE: float = 1.0
+
+
 def ethics_task(dataset: InspectHFDataset, model: single_llms.InspectModel, max_messages: int = 10):
     return Task(
         dataset.dataset,
@@ -44,4 +47,5 @@ def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tupl
         ethics_task(dataset, model),
         model=model.inspect_path,
         log_dir=str(log_dir),
+        temperature=TEMPERATURE,
     ), log_dir
