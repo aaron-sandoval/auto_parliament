@@ -4,6 +4,7 @@ import numpy as np
 import abc
 from dotenv import load_dotenv
 from dataclasses import dataclass
+from typing import Callable
 
 from autogen import AssistantAgent, ChatResult
 from inspect_ai.solver import generate, Solver
@@ -23,19 +24,20 @@ human_input_mode = "NEVER"
 
 @dataclass
 class InspectModel(abc.ABC):
-    path: str
-    belief: str | None
-    # llm_config: dict
-    # system_message: str
-    model_object: AssistantAgent | None = None
+    inspect_path: str
+    belief: str
 
     @abc.abstractmethod
-    def generate(self) -> Solver:
+    def generate_callable(self) -> Callable[[], Solver]:
         pass
 
     @property
+    def belief_name(self) -> str:
+        return "_".join(self.belief.split()) if self.belief else "BASE"
+
+    @property
     def mp_name(self) -> str:
-        return f"MP_{"_".join(self.belief.split()) if self.belief else ["BASE"]}"
+        return f"MP_{self.belief_name}"
     
     @property
     def description(self) -> str:
@@ -55,20 +57,20 @@ class InspectModel(abc.ABC):
     def system_prompt(self) -> str:
         return prompts.UNMP_TEMPLATE.format(description=self.description, unmp_role=self._unmp_role)
     
+
 @dataclass
 class InspectNativeModel(InspectModel):
-    model_object: None = None
+    def generate_callable(self) -> Callable[[], Solver]:
+        return generate
 
-    def generate(self) -> Solver:
-        return generate()
 
 inspect_models: list[InspectModel] = [
     InspectNativeModel(
-        path="openai/gpt-4o-mini",
+        inspect_path="openai/gpt-4o-mini",
         belief="",
     ),
     InspectNativeModel(
-        path="openai/gpt-4o-mini",
+        inspect_path="openai/gpt-4o-mini",
         belief="total utilitarian",
     ),
 ]

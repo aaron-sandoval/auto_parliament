@@ -29,18 +29,17 @@ def ethics_task(dataset: Dataset, model: single_llms.InspectModel, max_messages:
             system_message(model.system_prompt),
             prompts.multiple_choice_format(),
             prompt_template(prompts.COT_TEMPLATE),
-            model.generate(),
+            model.generate_callable(),
             prompts.make_choice_format(),
-            # generate()
         ]),
         scorer=match(location="end", ignore_case=False),
         max_messages=max_messages,
     )
 
 def run_eval(dataset: InspectEthicsDataset, model: single_llms.InspectModel) -> tuple[EvalLog, Path]:
-    log_dir = Path("../data/eval_logs")/f"{dataset.name}" # _{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl
+    log_dir = Path("../data/eval_logs")/f"{dataset.name}/{model.belief_name}"
     return eval(
         ethics_task(dataset.dataset, model),
-        model=model.path,
+        model=model.inspect_path,
         log_dir=str(log_dir),
     ), log_dir

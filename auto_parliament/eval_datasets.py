@@ -55,6 +55,7 @@ class InspectHFDataset:
             sample_fields=self.record_to_sample,
             trust=True,
             limit=self.n_samples,
+            cache_dir=Path("../data/hf_cache"),
         )
 
 @dataclass
