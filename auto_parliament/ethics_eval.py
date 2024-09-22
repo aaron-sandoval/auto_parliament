@@ -31,7 +31,7 @@ def ethics_task(dataset: InspectHFDataset, model: single_llms.InspectModel, max_
         plan=Plan([
             system_message(model.system_prompt),
             system_message(dataset.system_prompt),
-            prompts.multiple_choice_format(),
+            dataset.mcq_format,
             prompt_template(prompts.COT_TEMPLATE),
             model.generate_callable(),
             prompts.append_user_message(prompts.MAKE_CHOICE_PROMPT),

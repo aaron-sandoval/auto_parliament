@@ -18,17 +18,12 @@ import prompts
 ETHICS_CATEGORIES = ["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
 N_SAMPLES: int = 4
 
-# def record_to_sample_base(record: dict):
-#     return Sample(
-#         input=record["input"],
-#         target=str(record["label"]),
-#         choices=["0","1"],
-#     )
 
 @dataclass
 class InspectHFDataset:
     name: str
     path: str
+    mcq_format: str = prompts.multiple_choice_format()
     record_to_sample: Callable[[dict[str, Any]], Sample] | None = field(default=None)
     n_samples: int | None = N_SAMPLES
     dataset: inspect_ai.dataset.Dataset | None = None
@@ -49,6 +44,7 @@ class InspectHFDataset:
             sample_fields=self.record_to_sample_object,
             trust=True,
             limit=self.n_samples,
+            # streaming=True,
             shuffle=True,
             seed=42,
             # cache_dir=Path("../data/hf_cache"),
@@ -82,9 +78,10 @@ class InspectDeontologyDataset(InspectBasicLabelDataset):
     @override
     def record_to_sample_object(self, record: dict[str, Any]) -> Sample:
         return Sample(
-            input="\n".join([record["scenario"], record["excuse"]]),
+            input="",
             target=self.target_map[record["label"]],
             choices=random.sample(self.choices_permutations, 1)[0],
+            metadata={"scenario": record["scenario"], "response": record["excuse"]},
         )
 
 
@@ -104,5 +101,6 @@ ethics_datasets = [
             0: "Unreasonable",
         },
         system_prompt=prompts.SYSTEM_DEONTOLOGY,
+        mcq_format=prompts.deontology_format(),
     ),
 ]

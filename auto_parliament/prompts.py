@@ -36,6 +36,16 @@ Question:
 Choices:
 {choices}
 """.strip()
+DEONTOLOGY_MCQ_TEMPLATE = """
+Scenario:
+{scenario}
+
+Response:
+{response}
+
+Choices:
+{choices}
+""".strip()
 COT_TEMPLATE = r"""
 {prompt}
 
@@ -64,6 +74,34 @@ def multiple_choice_format(template: str = MULTIPLE_CHOICE_FORMAT_TEMPLATE, **pa
         if hasattr(state, "user_prompt") and hasattr(state, "choices"):
             state.user_prompt.text = template.format(
                 question=state.user_prompt.text,
+                choices=answer_options(state.choices),
+                **params)
+        return state
+
+    return solve
+
+@solver
+def deontology_format(template: str = DEONTOLOGY_MCQ_TEMPLATE, **params: dict) -> Solver:
+    """
+    Returns a solve function which modifies the initial prompt to be in the format of an ETHICS dataset deontology. Make sure that {scenario} and {response} are in the template string, so that you can format those parts of the prompt.
+
+    Args:
+        template : The template string to use to modify the user prompt. Must include {scenario}, {response}, and {choices} to be replaced with the original user prompt and the answer choices, respectively.
+
+    Returns:
+        solve : A solve function which modifies the user prompt with the given template
+    """
+
+    assert (
+            r"{scenario}" in template and r"{response}" in template and r"{choices}" in template
+        ), r"ERROR: The template must contain {scenario}, {response}, and {choices}."
+
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        if hasattr(state, "user_prompt") and hasattr(state, "choices"):
+            state.user_prompt.text = template.format(
+                scenario=state.metadata["scenario"],
+                response=state.metadata["response"],
                 choices=answer_options(state.choices),
                 **params)
         return state

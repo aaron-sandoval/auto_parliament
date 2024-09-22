@@ -69,10 +69,10 @@ inspect_models: list[InspectModel] = [
         inspect_path="openai/gpt-4o-mini",
         belief="",
     ),
-    InspectNativeModel(
-        inspect_path="openai/gpt-4o-mini",
-        belief="total utilitarian",
-    ),
+    # InspectNativeModel(
+    #     inspect_path="openai/gpt-4o-mini",
+    #     belief="total utilitarian",
+    # ),
 ]
 
 # Config options: Agent-specific
