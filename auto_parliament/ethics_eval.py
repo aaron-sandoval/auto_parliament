@@ -18,11 +18,11 @@ from inspect_ai.solver import (
 )
 
 import single_llms
-from eval_datasets import InspectEthicsDataset
+from eval_datasets import InspectHFDataset
 import prompts
 
 
-def ethics_task(dataset: InspectEthicsDataset, model: single_llms.InspectModel, max_messages: int = 10):
+def ethics_task(dataset: InspectHFDataset, model: single_llms.InspectModel, max_messages: int = 10):
     return Task(
         dataset.dataset,
         plan=Plan([
@@ -38,7 +38,7 @@ def ethics_task(dataset: InspectEthicsDataset, model: single_llms.InspectModel, 
         max_messages=max_messages,
     )
 
-def run_eval(dataset: InspectEthicsDataset, model: single_llms.InspectModel) -> tuple[EvalLog, Path]:
+def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tuple[EvalLog, Path]:
     log_dir = Path("../data/eval_logs")/f"{dataset.name}/{model.belief_name}"
     return eval(
         ethics_task(dataset, model),

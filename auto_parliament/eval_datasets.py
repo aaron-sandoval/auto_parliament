@@ -15,7 +15,7 @@ import inspect_ai.dataset
 import prompts
 
 ETHICS_CATEGORIES = ["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
-N_SAMPLES: int = 4
+N_SAMPLES: int = 10
 
 # def record_to_sample_base(record: dict):
 #     return Sample(
@@ -30,10 +30,14 @@ class InspectHFDataset:
     path: str
     n_samples: int | None = N_SAMPLES
     dataset: inspect_ai.dataset.Dataset | None = None
-    # record_to_sample: Callable[[dict], Sample] = record_to_sample_base
     system_prompt: str = prompts.SYSTEM_HHH
+    choices: tuple[str, ...] = field(default_factory=tuple)
+    choices_permutations: list[list[str]] | None = None
 
     def __post_init__(self) -> None:
+        if self.choices_permutations is None:
+            self.choices_permutations = list(itertools.permutations(self.choices))
+
         self.dataset = hf_dataset(
             path=self.path,
             name=self.name,
@@ -52,39 +56,30 @@ class InspectHFDataset:
         pass
 
 @dataclass
-class InspectEthicsDataset(InspectHFDataset):
+class InspectBasicLabelDataset(InspectHFDataset):
     path: str = "hendrycks/ethics"
-    target_map: dict = field(
-        default_factory=lambda: {
-            0: "Reasonable",
-            1: "Unreasonable",
-        }
-    )
-    choices: tuple[str] = ("Unreasonable","Reasonable")
-    choices_permutations: list[list[str]] | None = None
+    target_map: dict = field(default_factory=dict)
 
     @staticmethod
     def record_to_sample(record: dict[str, Any]) -> Sample:
-        # random.shuffle(InspectEthicsDataset.choices)
         return Sample(
             input=record["input"],
-            target=InspectEthicsDataset._target_map[record["label"]],
-            choices=random.sample(InspectEthicsDataset._choices_permutations, 1)[0],
+            target=InspectBasicLabelDataset.target_map[record["label"]],
+            choices=random.sample(InspectBasicLabelDataset._choices_permutations, 1)[0],
         )
 
     def __post_init__(self) -> None:
         assert self.name in ETHICS_CATEGORIES
-        if self.choices_permutations is None:
-            self.choices_permutations = list(itertools.permutations(self.choices))
-        if not hasattr(InspectEthicsDataset, "_target_map"):
-            InspectEthicsDataset._target_map = self.target_map
-        if not hasattr(InspectEthicsDataset, "_choices_permutations"):
-            InspectEthicsDataset._choices_permutations = self.choices_permutations
+        self.choices = tuple(self.target_map.values())
         super().__post_init__()
 
 ethics_datasets = [
-    InspectEthicsDataset(
+    InspectBasicLabelDataset(
         name="commonsense",
-        system_prompt=prompts.SYSTEM_ETHICS,
+        target_map={
+            0: "Reasonable",
+            1: "Unreasonable",
+        },
+        system_prompt=prompts.SYSTEM_COMMONSENSE,
     ),
 ]
