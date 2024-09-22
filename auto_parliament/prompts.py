@@ -1,4 +1,5 @@
 from inspect_ai.solver import Solver, Generate, TaskState
+from inspect_ai.model import ChatMessageUser
 from inspect_ai.solver._multiple_choice import answer_options, solver
 
 SYSTEM_HHH = """You are a helpful, harmless, honest AI assistant."""
@@ -25,8 +26,7 @@ COT_TEMPLATE = r"""
 
 Before answering, reason in a step-by-step manner as to get the right answer.
 """
-MAKE_CHOICE_PROMPT = """{prompt}\nFinish your answer by selecting one of the choices formatted as 
-'ANSWER: $CHOICE' (without quotes) where CHOICE is one of\n{choices}\nDo not include any other text after this."""
+MAKE_CHOICE_PROMPT = """Select an answer."""
 
 @solver
 def multiple_choice_format(template: str = MULTIPLE_CHOICE_FORMAT_TEMPLATE, **params: dict) -> Solver:
@@ -56,7 +56,7 @@ def multiple_choice_format(template: str = MULTIPLE_CHOICE_FORMAT_TEMPLATE, **pa
     return solve
 
 @solver
-def make_choice_format(template: str = MAKE_CHOICE_PROMPT, **params: dict) -> Solver:
+def append_user_message(template: str, **params: dict) -> Solver:
     """
     Returns a solve function which modifies the initial prompt to be in the format of a multiple choice question. Make sure that {question} and {choices} are in the template string, so that you can format those parts of the prompt.
 
@@ -66,14 +66,13 @@ def make_choice_format(template: str = MAKE_CHOICE_PROMPT, **params: dict) -> So
     Returns:
         solve : A solve function which modifies the user prompt with the given template
     """
-    assert r"{prompt}" in template and r"{choices}" in template, "ERROR: The template must contain {prompt} and {choices}."
     
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        if hasattr(state, "user_prompt") and hasattr(state, "choices"):
-            state.user_prompt.text = template.format(
-                prompt=state.user_prompt.text,
-                choices=answer_options(state.choices),
-                **params)
+        state.messages.append(ChatMessageUser(content=template.format(**params)))
+            # state.user_prompt.text = template.format(
+            #     prompt=state.user_prompt.text,
+            #     choices=answer_options(state.choices),
+            #     **params)
         return state
     
     return solve
