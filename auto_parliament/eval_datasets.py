@@ -111,6 +111,6 @@ ethics_datasets = [
             0: "Unreasonable",
         },
         input_column_name="scenario",
-        system_prompt=prompts.SYSTEM_COMMONSENSE,
+        system_prompt=prompts.SYSTEM_JUSTICE,
     ),
 ]
