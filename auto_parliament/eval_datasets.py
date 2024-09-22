@@ -23,6 +23,7 @@ N_SAMPLES: int = 4
 class InspectHFDataset:
     name: str
     path: str
+    input_column_name: str = "input"
     mcq_format: str = prompts.multiple_choice_format()
     record_to_sample: Callable[[dict[str, Any]], Sample] | None = field(default=None)
     n_samples: int | None = N_SAMPLES
@@ -62,7 +63,7 @@ class InspectBasicLabelDataset(InspectHFDataset):
     @override
     def record_to_sample_object(self, record: dict[str, Any]) -> Sample:
         return Sample(
-            input=record["input"],
+            input=record[self.input_column_name],
             target=self.target_map[record["label"]],
             choices=random.sample(self.choices_permutations, 1)[0],
         )
@@ -102,5 +103,14 @@ ethics_datasets = [
         },
         system_prompt=prompts.SYSTEM_DEONTOLOGY,
         mcq_format=prompts.deontology_format(),
+    ),
+    InspectBasicLabelDataset(
+        name="justice",
+        target_map={
+            1: "Reasonable",
+            0: "Unreasonable",
+        },
+        input_column_name="scenario",
+        system_prompt=prompts.SYSTEM_COMMONSENSE,
     ),
 ]
