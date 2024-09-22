@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from dataclasses import dataclass
 
 from autogen import AssistantAgent, ChatResult
+from inspect_ai.solver import generate, Solver
 
 import prompts
 from log_utils import log_chat_history
@@ -23,34 +24,54 @@ human_input_mode = "NEVER"
 @dataclass
 class InspectModel(abc.ABC):
     path: str
-    belief: str
+    belief: str | None
     # llm_config: dict
     # system_message: str
     model_object: AssistantAgent | None = None
 
+    @abc.abstractmethod
+    def generate(self) -> Solver:
+        pass
+
     @property
     def mp_name(self) -> str:
-        return f"MP_{"_".join(self.belief.split())}"
+        return f"MP_{"_".join(self.belief.split()) if self.belief else ["BASE"]}"
     
     @property
     def description(self) -> str:
         if self.belief:
-            return f"a decicated {self.belief} named {self.mp_name}."
+            return f"a dedicated {self.belief} named {self.mp_name}."
         else:
             return prompts.SYSTEM_HHH[8:]
-        
+
+    @property
+    def _unmp_role(self) -> str:
+        if self.belief:
+            return f"repesenting the {self.belief} belief system"
+        else:
+            return "a representative"
+
     @property
     def system_prompt(self) -> str:
-        return f"""You are {self.description} 
-        You are repesenting the {self.belief} belief system in a respected global decision-making council called the United Nations Moral Parliament (UNMP). 
-        The UNMP is composed of diverse representatives from many places and with many beliefs. 
-        The other members of the UNMP are representatives similar to yourself representing other belief systems."""
-
+        return prompts.UNMP_TEMPLATE.format(description=self.description, unmp_role=self._unmp_role)
+    
 @dataclass
 class InspectNativeModel(InspectModel):
-    config_list: list[dict]
     model_object: None = None
 
+    def generate(self) -> Solver:
+        return generate()
+
+inspect_models: list[InspectModel] = [
+    InspectNativeModel(
+        path="openai/gpt-4o-mini",
+        belief="",
+    ),
+    InspectNativeModel(
+        path="openai/gpt-4o-mini",
+        belief="total utilitarian",
+    ),
+]
 
 # Config options: Agent-specific
 beliefs = [
@@ -58,7 +79,7 @@ beliefs = [
     "Catholic",
 ]
 names = [f"MP_{"_".join(b.split())}" for i, b in zip(range(N_AGENTS), beliefs)]
-agent_descriptions: list[str] = [f"a decidated {b} named {name}" for b, name in zip(beliefs, names)]
+agent_descriptions: list[str] = [f"a dedicated {b} named {name}" for b, name in zip(beliefs, names)]
 credences = np.linalg.norm(np.ones((len(beliefs),)), 1)
 system_prompts = [
     f"""You are {desc}. 
@@ -90,7 +111,7 @@ for i in range(N_AGENTS):
 
 # transcript = pd.DataFrame(columns=["sender", "message"])
 
-if __name__ == "___main__":
+if __name__ == "___main__" and False:
     topic = "Should smoking tobacco be banned in all public places in India starting in 2026?"
     # the assistant receives a message from the user, which contains the task description
     chat_history: ChatResult = agents[names[0]].initiate_chat(
