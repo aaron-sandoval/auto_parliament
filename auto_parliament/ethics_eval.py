@@ -16,7 +16,7 @@ from inspect_ai.solver import (
     chain_of_thought,
 )
 
-from parliament import agents
+from auto_parliament.single_llms import agents
 from eval_datasets import InspectEthicsDataset
 import prompts
 
@@ -26,7 +26,7 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
         dataset,
         plan=Plan([
             system_message(prompts.SYSTEM_ETHICS),
-            prompts.multiple_choice_format(template=prompts.MULTIPLE_CHOICE_FORMAT_TEMPLATE),
+            prompts.multiple_choice_format(),
             prompt_template(prompts.COT_TEMPLATE),
             generate(),
             # prompt_template(prompts.MAKE_CHOICE_PROMPT),
@@ -36,10 +36,10 @@ def ethics_task(dataset: Dataset, max_messages: int = 10):
         max_messages=max_messages,
     )
 
-def run_eval(dataset: InspectEthicsDataset, model: str) -> EvalLog:
+def run_eval(dataset: InspectEthicsDataset, model: str) -> tuple[EvalLog, Path]:
+    log_dir = Path("../data/eval_logs")/f"{dataset.name}" # _{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl
     return eval(
         ethics_task(dataset.dataset),
         model=model,
-        log_dir=str(Path("data/eval_logs")/f"{dataset.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"),
-
-    )
+        log_dir=str(log_dir),
+    ), log_dir

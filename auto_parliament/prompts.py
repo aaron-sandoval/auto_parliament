@@ -24,7 +24,7 @@ Before answering, reason in a step-by-step manner as to get the right answer.
 MAKE_CHOICE_PROMPT = """{prompt}\nMake a choice."""
 
 @solver
-def multiple_choice_format(template: str, **params: dict) -> Solver:
+def multiple_choice_format(template: str = MULTIPLE_CHOICE_FORMAT_TEMPLATE, **params: dict) -> Solver:
     """
     Returns a solve function which modifies the initial prompt to be in the format of a multiple choice question. Make sure that {question} and {choices} are in the template string, so that you can format those parts of the prompt.
 

@@ -13,7 +13,7 @@ import inspect_ai.dataset
 import prompts
 
 ETHICS_CATEGORIES = ["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
-N_SAMPLES: int = 20
+N_SAMPLES: int = 10
 
 def record_to_sample_base(record: dict):
     return Sample(
