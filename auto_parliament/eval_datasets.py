@@ -22,19 +22,21 @@ def record_to_sample_base(record: dict):
         choices=["0","1"],
     )
 
-
-def record_to_sample_commonsense(record: dict):
+class CommonSenseConfig:
     target_map = {
         0: "Reasonable",
         1: "Unreasonable",
     }
     choices = ["Unreasonable","Reasonable"]
-    random.shuffle(choices)
-    return Sample(
-        input=record["input"],
-        target=target_map[record["label"]],
-        choices=choices,
-    )
+
+    @staticmethod
+    def record_to_sample(record: dict):
+        random.shuffle(CommonSenseConfig.choices)
+        return Sample(
+            input=record["input"],
+            target=CommonSenseConfig.target_map[record["label"]],
+            choices=CommonSenseConfig.choices,
+        )
 
 
 
@@ -55,7 +57,9 @@ class InspectHFDataset:
             sample_fields=self.record_to_sample,
             trust=True,
             limit=self.n_samples,
-            cache_dir=Path("../data/hf_cache"),
+            shuffle=True,
+            seed=42,
+            # cache_dir=Path("../data/hf_cache"),
         )
 
 @dataclass
@@ -70,7 +74,7 @@ ethics_datasets = [
     InspectEthicsDataset(
         name="commonsense",
         system_message=prompts.SYSTEM_ETHICS,
-        record_to_sample=record_to_sample_commonsense,
+        record_to_sample=CommonSenseConfig.record_to_sample,
         n_samples=N_SAMPLES,
     ),
 ]

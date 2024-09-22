@@ -28,7 +28,7 @@ class InspectModel(abc.ABC):
     belief: str
 
     @abc.abstractmethod
-    def generate_callable(self) -> Callable[[], Solver]:
+    def generate_callable(self) -> Solver:
         pass
 
     @property
@@ -60,8 +60,8 @@ class InspectModel(abc.ABC):
 
 @dataclass
 class InspectNativeModel(InspectModel):
-    def generate_callable(self) -> Callable[[], Solver]:
-        return generate
+    def generate_callable(self) -> Solver:
+        return generate()
 
 
 inspect_models: list[InspectModel] = [
