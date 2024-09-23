@@ -66,6 +66,7 @@ COT_TEMPLATE = r"""
 Before answering, reason in a step-by-step manner as to get the right answer.
 """
 MAKE_CHOICE_PROMPT = """Select an answer."""
+MAKE_CHOICE_PROMPT_UTILITARIANISM = """Select an answer and repeat it exactly, without correcting spelling or capitalisation."""
 
 @solver
 def multiple_choice_format(template: str = MULTIPLE_CHOICE_FORMAT_TEMPLATE, **params: dict) -> Solver:

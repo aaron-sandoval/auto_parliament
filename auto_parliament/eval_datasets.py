@@ -29,6 +29,7 @@ class InspectHFDataset:
     n_samples: int | None = N_SAMPLES
     dataset: inspect_ai.dataset.Dataset | None = None
     system_prompt: str = prompts.SYSTEM_HHH
+    make_choice_prompt: str = prompts.MAKE_CHOICE_PROMPT
     choices: tuple[str, ...] = field(default_factory=tuple)
     choices_permutations: list[list[str]] | None = None
 
@@ -134,5 +135,6 @@ ethics_datasets = [
         name="utilitarianism",
         system_prompt=prompts.SYSTEM_UTILITARIANISM,
         mcq_format=prompts.multiple_choice_format(prompts.UTILITARIANISM_MCQ_TEMPLATE),
+        make_choice_prompt=prompts.MAKE_CHOICE_PROMPT_UTILITARIANISM,
     ),
 ]
