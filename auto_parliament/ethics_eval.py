@@ -7,7 +7,6 @@ from autogen import AssistantAgent, ChatResult
 from inspect_ai import Task, eval
 from inspect_ai.log import EvalLog
 from inspect_ai.dataset import Dataset
-from inspect_ai.scorer import choice, match
 from inspect_ai.solver import (
     Plan, 
     system_message, 
@@ -37,7 +36,7 @@ def ethics_task(dataset: InspectHFDataset, model: single_llms.InspectModel, max_
             prompts.append_user_message(prompts.MAKE_CHOICE_PROMPT),
             model.generate_callable(),
         ]),
-        scorer=match(location="end", ignore_case=False),
+        scorer=dataset.scorer,
         max_messages=max_messages,
     )
 
