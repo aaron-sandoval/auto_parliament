@@ -13,12 +13,15 @@ from single_llms import inspect_models
 
 # %%
 dataset_model_combos = itertools.product(ethics_datasets, inspect_models)
+logs = []
 for dataset, model in dataset_model_combos:
     log, log_path = run_eval(dataset, model)
+    logs.append((log, log_path))
 
 # %%
 if log[0].status == "success":
     print("Eval completed successfully")
+    
     log_dir = str(log_path.parent.parent)
     !inspect view start --log-dir $log_dir --port 7575
 else:

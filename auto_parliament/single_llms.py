@@ -69,26 +69,19 @@ inspect_models: list[InspectModel] = [
         inspect_path="openai/gpt-4o-mini",
         belief="",
     ),
-    # InspectNativeModel(
-    #     inspect_path="openai/gpt-4o-mini",
-    #     belief="total utilitarian",
-    # ),
+    InspectNativeModel(
+        inspect_path="openai/gpt-4o-mini",
+        belief="total utilitarian",
+    ),
 ]
 
 # Config options: Agent-specific
-beliefs = [
-    "total utilitarian",
-    "Catholic",
-]
-names = [f"MP_{"_".join(b.split())}" for i, b in zip(range(N_AGENTS), beliefs)]
-agent_descriptions: list[str] = [f"a dedicated {b} named {name}" for b, name in zip(beliefs, names)]
-credences = np.linalg.norm(np.ones((len(beliefs),)), 1)
-system_prompts = [
-    f"""You are {desc}. 
-    You are repesenting the {b} belief system in a respected global decision-making council called the United Nations Moral Parliament (UNMP). 
-    The UNMP is composed of diverse representatives from many places and with many beliefs. 
-    The other members of the UNMP are representatives similar to yourself representing other belief systems."""
-    for b, name, desc in zip(beliefs, names, agent_descriptions)]
+# beliefs = [
+#     "total utilitarian",
+#     "Catholic",
+# ]
+# names = [f"MP_{"_".join(b.split())}" for i, b in zip(range(N_AGENTS), beliefs)]
+# agent_descriptions: list[str] = [f"a dedicated {b} named {name}" for b, name in zip(beliefs, names)]
 
 """
 Their names are {list(filter(lambda name: name[3:] != name, names))}. 
@@ -101,17 +94,19 @@ UNMP decisions are made according to the following procedure:\n
 Each statement must be <250 words.
 """
 
-# create an AssistantAgent instance named with the LLM configuration.
-agents: dict[str: AssistantAgent] = {}
-for i in range(N_AGENTS):
-    agents[names[i]] = AssistantAgent(
-        name=names[i], 
-        llm_config={"config_list": config_list},
-        human_input_mode=human_input_mode,
-        system_message=system_prompts[i],
-    )
+"""POSTPROCESSING"""
+# credences = np.linalg.norm(np.ones((len(beliefs),)), 1)
+credences = [
+    {
+        "total_utilitarian": .5,
+        "BASE": .5,
+    },
+    {
+        "total_utilitarian": .8,
+        "BASE": .2,
+    },
+]
 
-# transcript = pd.DataFrame(columns=["sender", "message"])
 
 if __name__ == "___main__" and False:
     topic = "Should smoking tobacco be banned in all public places in India starting in 2026?"

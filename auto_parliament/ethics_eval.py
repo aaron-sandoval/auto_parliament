@@ -38,6 +38,7 @@ def ethics_task(dataset: InspectHFDataset, model: single_llms.InspectModel, max_
         ]),
         scorer=dataset.scorer,
         max_messages=max_messages,
+        name=f"{dataset.name}_{model.belief_name}",
     )
 
 def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tuple[EvalLog, Path]:
@@ -48,3 +49,6 @@ def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tupl
         log_dir=str(log_dir),
         temperature=TEMPERATURE,
     ), log_dir
+
+
+def postprocess_logs(single_llm_logs: list[tuple[EvalLog, Path]], parliament_args):
