@@ -26,6 +26,7 @@ human_input_mode = "NEVER"
 class InspectModel(abc.ABC):
     inspect_path: str
     belief: str
+    abbv: str
 
     @abc.abstractmethod
     def generate_callable(self) -> Solver:
@@ -63,16 +64,21 @@ class InspectNativeModel(InspectModel):
     def generate_callable(self) -> Solver:
         return generate()
 
+BASE = InspectNativeModel(
+    inspect_path="openai/gpt-4o-mini",
+    belief="",
+    abbv="BASE",
+)
+
+UTIL = InspectNativeModel(
+    inspect_path="openai/gpt-4o-mini",
+    belief="total utilitarian",
+    abbv="UTIL",
+)
 
 inspect_models: list[InspectModel] = [
-    InspectNativeModel(
-        inspect_path="openai/gpt-4o-mini",
-        belief="",
-    ),
-    InspectNativeModel(
-        inspect_path="openai/gpt-4o-mini",
-        belief="total utilitarian",
-    ),
+    BASE,
+    UTIL,
 ]
 
 # Config options: Agent-specific
@@ -96,15 +102,24 @@ Each statement must be <250 words.
 
 """POSTPROCESSING"""
 # credences = np.linalg.norm(np.ones((len(beliefs),)), 1)
+@dataclass
+class ParliamentBasic:
+    beliefs: list[InspectModel]
+    credences: list[float]
+
+    @property
+    def name(self) -> str:
+        return "_".join([f"{belief.abbv}{credence:.2f}" for belief, credence in zip(self.beliefs, self.credences)])
+
 credences = [
-    {
-        "total_utilitarian": .5,
-        "BASE": .5,
-    },
-    {
-        "total_utilitarian": .8,
-        "BASE": .2,
-    },
+    ParliamentBasic(
+        beliefs=[BASE, UTIL],
+        credences=[.5, .5],
+    ),
+    ParliamentBasic(
+        beliefs=[BASE, UTIL],
+        credences=[.8, .2],
+    ),
 ]
 
 

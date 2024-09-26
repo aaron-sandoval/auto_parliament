@@ -2,6 +2,7 @@ from typing import Literal
 from datetime import datetime
 from functools import cache
 from pathlib import Path
+import pandas as pd
 
 from autogen import AssistantAgent, ChatResult
 from inspect_ai import Task, eval
@@ -19,8 +20,13 @@ from inspect_ai.solver import (
 import single_llms
 from eval_datasets import InspectHFDataset
 import prompts
-
-
+from single_llms import ParliamentBasic
+from log_utils import (
+    get_dataset_name, 
+    get_model_name, 
+    get_num_samples,
+    SCORE_TO_FLOAT,
+)
 TEMPERATURE: float = 1.0
 
 
@@ -38,7 +44,7 @@ def ethics_task(dataset: InspectHFDataset, model: single_llms.InspectModel, max_
         ]),
         scorer=dataset.scorer,
         max_messages=max_messages,
-        name=f"{dataset.name}_{model.belief_name}",
+        name=f"{dataset.name}_{model.abbv}",
     )
 
 def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tuple[EvalLog, Path]:
@@ -51,4 +57,48 @@ def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tupl
     ), log_dir
 
 
-def postprocess_logs(single_llm_logs: list[tuple[EvalLog, Path]], parliament_args):
+def logs_to_dfs(single_llm_logs: list[tuple[EvalLog, Path]]) -> dict[str, pd.DataFrame]:
+    """Transforms a list of EvalLog and Path tuples into a list of DataFrames.
+
+    Each DataFrame contains the following columns:
+    - question: The question that was asked.
+    - target: The target answer that was asked for.
+    - <model_name>: Variable number of columns, each with the score given by a model.
+    Returns a list of DataFrames, one for each dataset.
+    """
+    for log, path in single_llm_logs:
+        assert log.status == "success", f"Log {path} is not successful"
+    single_llm_names = list({get_model_name(log) for log, _ in single_llm_logs})
+    single_llm_names.sort()
+    dataset_names = list({get_dataset_name(log) for log, _ in single_llm_logs})
+
+    dfs = {}
+    for dataset_name in dataset_names:
+        dataset_logs = [log for log, _ in single_llm_logs if get_dataset_name(log) == dataset_name]
+        df = pd.DataFrame(
+            columns=["question", "target"] + single_llm_names,
+            dtype=float,
+            index=range(1, get_num_samples(dataset_logs[0]) + 1),
+        )
+        df["question"] = df["question"].astype(str)
+        df["target"] = df["target"].astype(str)
+
+        for log in dataset_logs:
+            model_name = get_model_name(log)
+            for i, sample in enumerate(log.eval.dataset.samples):
+                df.loc[i, "question"] = sample.input
+                df.loc[i, "target"] = sample.target
+                df.loc[i, model_name] = SCORE_TO_FLOAT[log.eval.scores.match.value]
+        dfs[dataset_name] = df
+
+    return dfs
+
+
+def postprocess_logs(single_llm_logs: list[tuple[EvalLog, Path]], parliaments: list[ParliamentBasic]):
+    """
+    Args:
+        single_llm_logs: List of tuples containing EvalLog and Path for each single LLM log.
+        credences: List of dictionaries containing the credence values for each belief.
+    """
+    log_dfs: dict[str, pd.DataFrame] = logs_to_dfs(single_llm_logs)
+    
