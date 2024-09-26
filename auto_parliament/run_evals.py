@@ -6,9 +6,9 @@ import itertools
 
 from inspect_ai.log import EvalLog
 
-from ethics_eval import run_eval
+from ethics_eval import run_eval, postprocess_logs
 from eval_datasets import ethics_datasets
-from single_llms import inspect_models
+from single_llms import inspect_models, parliaments
 
 
 # %%
@@ -21,8 +21,10 @@ for dataset, model in dataset_model_combos:
 # %%
 if log[0].status == "success":
     print("Eval completed successfully")
-    
+    postprocess_logs(logs, parliaments)
     log_dir = str(log_path.parent.parent)
     !inspect view start --log-dir $log_dir --port 7575
 else:
     print("Eval failed")
+
+# %%

@@ -61,3 +61,26 @@ def get_questions(log: EvalLog) -> list[str]:
 
 def get_targets(log: EvalLog) -> list[str]:
     return [sample.target for sample in log.eval.dataset.samples]
+
+def get_latest_filenames(log_dir: Path, only_latest_run: bool = False) -> list[Path]:
+    """Gets the latest log files in the given directory for each dataset and model.
+
+    Args:
+        log_dir: The directory to search for log files.
+        only_latest_run: Whether to only return log files with the single latest runtime among all, or the latest for each dataset and model.
+    """
+    if only_latest_run:
+        log_files = log_dir.glob("**/*.json")
+        # Count the number of leaf directories
+        num_leaf_dirs = sum(1 for _ in log_dir.rglob('*') if _.is_dir() and not any(_.iterdir()))
+        
+        log_files = sorted(log_files, key=lambda x: x.name)[-num_leaf_dirs:]
+        return log_files
+    else:
+        log_files: list[Path] = []
+        for subdir in log_dir.iterdir():
+            if subdir.is_dir():
+                latest_file = sorted(subdir.glob('*.json'))[-1]
+                # if latest_file:
+                log_files.append(latest_file)
+        return sorted(log_files, key=lambda x: x.name)

@@ -111,7 +111,7 @@ class ParliamentBasic:
     def name(self) -> str:
         return "_".join([f"{belief.abbv}{credence:.2f}" for belief, credence in zip(self.beliefs, self.credences)])
 
-credences = [
+parliaments = [
     ParliamentBasic(
         beliefs=[BASE, UTIL],
         credences=[.5, .5],

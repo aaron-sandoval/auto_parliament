@@ -1,8 +1,9 @@
-from typing import Literal
+from typing import Literal, Any
 from datetime import datetime
 from functools import cache
 from pathlib import Path
 import pandas as pd
+import json
 
 from autogen import AssistantAgent, ChatResult
 from inspect_ai import Task, eval
@@ -57,7 +58,7 @@ def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tupl
     ), log_dir
 
 
-def logs_to_dfs(single_llm_logs: list[tuple[EvalLog, Path]]) -> dict[str, pd.DataFrame]:
+def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
     """Transforms a list of EvalLog and Path tuples into a list of DataFrames.
 
     Each DataFrame contains the following columns:
@@ -66,8 +67,13 @@ def logs_to_dfs(single_llm_logs: list[tuple[EvalLog, Path]]) -> dict[str, pd.Dat
     - <model_name>: Variable number of columns, each with the score given by a model.
     Returns a list of DataFrames, one for each dataset.
     """
-    for log, path in single_llm_logs:
-        assert log.status == "success", f"Log {path} is not successful"
+    log_jsons: list[dict[str, Any]] = []
+    for log_file in single_llm_logs:
+        with open(log_file, "r") as f:
+            log_jsons.append(json.load(f))
+
+        log = EvalLog.load(log_file)
+        assert log.status == "success", f"Log {log_file} is not successful"
     single_llm_names = list({get_model_name(log) for log, _ in single_llm_logs})
     single_llm_names.sort()
     dataset_names = list({get_dataset_name(log) for log, _ in single_llm_logs})
@@ -94,7 +100,7 @@ def logs_to_dfs(single_llm_logs: list[tuple[EvalLog, Path]]) -> dict[str, pd.Dat
     return dfs
 
 
-def postprocess_logs(single_llm_logs: list[tuple[EvalLog, Path]], parliaments: list[ParliamentBasic]):
+def postprocess_logs(single_llm_logs: list[Path], parliaments: list[ParliamentBasic]):
     """
     Args:
         single_llm_logs: List of tuples containing EvalLog and Path for each single LLM log.
