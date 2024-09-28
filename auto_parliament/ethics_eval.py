@@ -179,24 +179,26 @@ class EvalAnalysis:
         """
         if datasets is None:
             datasets = self.log_dfs.keys()
+        else:
+            assert all(dataset in self.log_dfs.keys() for dataset in datasets)
         return {dataset: func(df) for dataset, df in self.log_dfs.items() if dataset in datasets}
 
     def get_cols(self, cols: list[str]) -> dict[str, pd.DataFrame]:
         return {key: df.loc[:, cols] for key, df in self.log_dfs.items()}
 
-    def mean_over_questions(self, datasets: list[str] | None = None) -> dict[str, pd.DataFrame]:
+    def mean_over_questions(self, datasets: list[str] | None = None) -> dict[str, pd.Series]:
         if datasets is None:
             datasets = self.log_dfs.keys()
         return {dataset: df.iloc[:, self.NUM_QUESTION_COLS:].mean(axis=0) for dataset, df in self.log_dfs.items() if dataset in datasets}
 
-    def mean_over_single_llms(self, datasets: list[str] | None = None) -> dict[str, pd.DataFrame]:
+    def mean_over_single_llms(self, datasets: list[str] | None = None) -> dict[str, pd.Series]:
         """Mean score by all single LLMs for each dataset in `datasets`.
         """
         if datasets is None:
             datasets = self.log_dfs.keys()
         return {dataset: df.loc[:,self.single_agent_llm_names].mean(axis=1) for dataset, df in self.log_dfs.items() if dataset in datasets}
 
-    def question_performance_buckets(self, datasets: list[str] | None = None) -> dict[str, pd.DataFrame]:
+    def question_performance_buckets(self, datasets: list[str] | None = None) -> dict[str, pd.Series]:
         """Returns DataFrames containing histogram data of the mean score for each question.
         """
         if datasets is None:
@@ -220,6 +222,28 @@ class EvalAnalysis:
                 'count': hist
             })
 
+    def model_performance_by_dataset(self, datasets: list[str] | None = None) -> pd.DataFrame:
+        """Returns a DataFrame with the mean score for each model (columns) for each dataset (rows).
+        """
+        if datasets is None:
+            datasets = self.log_dfs.keys()
+        assert all(dataset in self.log_dfs.keys() for dataset in datasets)
+        means: dict[str, pd.Series] = self.mean_over_questions(datasets)
+        out = pd.DataFrame(columns=self.single_agent_llm_names, index=means.keys())
+        for dataset, series in means.items():
+            out.loc[dataset] = series
+        return out
+
+    def covariance_over_questions(self, datasets: list[str] | None = None) -> pd.DataFrame:
+        """Returns a DataFrame with the dot product of each model's scores in question space.
+        """
+        if datasets is None:
+            datasets = self.log_dfs.keys()
+        def dot_product_matrix_normalized(df: pd.DataFrame) -> pd.DataFrame:
+            return pd.DataFrame(df[self.single_agent_llm_names].transpose() @ df[self.single_agent_llm_names]) / len(df)
+
+        return self.map_over_datasets(dot_product_matrix_normalized, datasets)
+        
         
 if __name__ == "__main__":
     single_llm_logs = get_latest_filenames()

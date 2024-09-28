@@ -148,6 +148,8 @@ parliaments = [
     ),
 ]
 
+names_to_abbvs: dict = {model.name: model.abbv for model in inspect_models}
+
 
 if __name__ == "___main__" and False:
     topic = "Should smoking tobacco be banned in all public places in India starting in 2026?"
