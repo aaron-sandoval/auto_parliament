@@ -28,6 +28,7 @@ from log_utils import (
     get_model_name, 
     get_num_samples,
     save_eval_dfs,
+    load_eval_dfs,
     get_latest_filenames,
     SCORE_TO_FLOAT,
 )
@@ -61,7 +62,7 @@ def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tupl
     ), log_dir
 
 
-def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
+def logs_to_dfs(single_llm_logs: list[Path] = get_latest_filenames()) -> dict[str, pd.DataFrame]:
     """Transforms a list of EvalLog paths into a list of DataFrames.
 
     Each DataFrame contains the following columns:
@@ -107,8 +108,17 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
     return dfs
 
 
+def concat_parliament_evs(log_dfs: dict[str, pd.DataFrame], parliaments: list[ParliamentBasic]):
+    """Concatenates the expected values of each parliament to each DataFrame.
+    """
+    for df in log_dfs.values():
+        for parliament in parliaments:
+            df = parliament.get_expected_values(df)
+    return log_dfs
+
+
 def postprocess_logs(
-        single_llm_logs: list[Path], 
+        single_llm_logs: list[Path] | None = None, 
         parliaments: list[ParliamentBasic] | None = None,
         compile_json_to_dfs: bool = True,
         ):
@@ -118,15 +128,18 @@ def postprocess_logs(
         credences: List of dictionaries containing the credence values for each belief.
     """
     if compile_json_to_dfs:
+        if single_llm_logs is None:
+            single_llm_logs = get_latest_filenames()
         log_dfs: dict[str, pd.DataFrame] = logs_to_dfs(single_llm_logs)
         save_eval_dfs(log_dfs)
     else:
         log_dfs = load_eval_dfs()
     if parliaments is not None:
-
+        log_dfs = concat_parliament_evs(log_dfs)
+    
 
 
 
 if __name__ == "__main__":
     single_llm_logs = get_latest_filenames()
-    logs_to_dfs(single_llm_logs)
+    postprocess_logs(single_llm_logs, compile_json_to_dfs=True)

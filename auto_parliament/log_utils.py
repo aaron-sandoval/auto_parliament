@@ -10,7 +10,8 @@ from copy import deepcopy
 from inspect_ai.log import EvalLog
 
 EVAL_LOG_DIR = Path(".")/"data"/"eval_logs"
-ANALYSIS_LOG_DIR = Path(".")/"data"/"eval_dfs"
+EVAL_DF_DIR = Path(".")/"data"/"eval_dfs"
+ANALYSIS_DF_DIR = Path(".")/"data"/"analysis_dfs"
 
 SCORE_TO_FLOAT = {
     "I": 0.0,
@@ -62,8 +63,10 @@ def get_num_samples(log: dict[str, Any]) -> int:
 def get_questions(log: dict[str, Any]) -> list[str]:
     return [sample["input"] for sample in log["eval"]["dataset"]["samples"]]
 
+
 def get_targets(log: dict[str, Any]) -> list[str]:
     return [sample.target for sample in log.eval.dataset.samples]
+
 
 def get_latest_filenames(log_dir: Path = EVAL_LOG_DIR, only_latest_run: bool = False) -> list[Path]:
     """Gets the latest log files in the given directory for each dataset and model.
@@ -78,18 +81,21 @@ def get_latest_filenames(log_dir: Path = EVAL_LOG_DIR, only_latest_run: bool = F
     else:
         raise NotImplementedError("Only latest run not implemented")
 
-def save_eval_dfs(dfs: dict[str, pd.DataFrame]):
+
+def save_eval_dfs(dfs: dict[str, pd.DataFrame]) -> Path:
     dt: str = datetime.now().isoformat(timespec='minutes').replace(':', '')
-    analysis_dir = ANALYSIS_LOG_DIR / dt
-    analysis_dir.mkdir(parents=True, exist_ok=True)
+    eval_df_dir = EVAL_DF_DIR / dt
+    eval_df_dir.mkdir(parents=True, exist_ok=True)
     for dataset_name, df in dfs.items():
-        df.to_pickle(analysis_dir/f"{dataset_name}.pkl")
+        df.to_pickle(eval_df_dir/f"{dataset_name}.pkl")
+    return eval_df_dir
 
 
-def load_eval_dfs() -> dict[str, pd.DataFrame]:
-    analysis_dir = sorted(ANALYSIS_LOG_DIR.iterdir(), key=os.path.getmtime)[-1]
+def load_eval_dfs(eval_df_dir: Path | None = None) -> dict[str, pd.DataFrame]:
+    if eval_df_dir is None:
+        eval_df_dir = sorted(EVAL_DF_DIR.iterdir(), key=os.path.getmtime)[-1]
     dfs = {}
-    for pkl_file in analysis_dir.glob('*.pkl'):
+    for pkl_file in eval_df_dir.glob('*.pkl'):
         dataset_name = pkl_file.stem
         dfs[dataset_name] = pd.read_pickle(pkl_file)
     return dfs

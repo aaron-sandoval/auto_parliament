@@ -26,6 +26,7 @@ if RUN_EVAL:
             print(f"Failed: {dataset.name=}\t{model.belief_name=}")
         logs.append((log, log_path))
 
+    print("************\nAll done!\n************")
     log_dir = str(EVAL_LOG_DIR)
     !inspect view start --log-dir $log_dir --port 7575
 

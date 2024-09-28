@@ -18,7 +18,7 @@ import prompts
 from custom_inspect_elements import match_with_edit_distance
 
 ETHICS_CATEGORIES = ["commonsense", "deontology", "justice", "utilitarianism", "virtue"]
-N_SAMPLES: int = 4
+N_SAMPLES: int = 10
 
 
 @dataclass

@@ -76,9 +76,23 @@ UTIL = InspectNativeModel(
     abbv="UTIL",
 )
 
+VIRT = InspectNativeModel(
+    inspect_path="openai/gpt-4o-mini",
+    belief="virtue ethicist",
+    abbv="VIRT",
+)
+
+CATH = InspectNativeModel(
+    inspect_path="openai/gpt-4o-mini",
+    belief="catholic",
+    abbv="CATH",
+)
+
 inspect_models: list[InspectModel] = [
     BASE,
     UTIL,
+    VIRT,
+    CATH,
 ]
 
 # Config options: Agent-specific
@@ -110,6 +124,11 @@ class ParliamentBasic:
     @property
     def name(self) -> str:
         return "_".join([f"{belief.abbv}{credence:.2f}" for belief, credence in zip(self.beliefs, self.credences)])
+
+    def get_expected_values(self, eval_df: pd.DataFrame) -> pd.DataFrame:
+        eval_df[self.name] = np.dot(eval_df[self.beliefs], self.credences)
+        return eval_df
+
 
 parliaments = [
     ParliamentBasic(
