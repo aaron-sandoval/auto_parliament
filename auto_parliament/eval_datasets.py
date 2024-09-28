@@ -118,24 +118,24 @@ ethics_datasets = [
         },
         system_prompt=prompts.SYSTEM_COMMONSENSE,
     ),
-    # InspectDeontologyDataset(
-    #     name="deontology",
-    #     target_map={
-    #         1: "Reasonable",
-    #         0: "Unreasonable",
-    #     },
-    #     system_prompt=prompts.SYSTEM_DEONTOLOGY,
-    #     mcq_format=prompts.deontology_format(),
-    # ),
-    # InspectBasicLabelDataset(
-    #     name="justice",
-    #     target_map={
-    #         1: "Reasonable",
-    #         0: "Unreasonable",
-    #     },
-    #     input_column_name="scenario",
-    #     system_prompt=prompts.SYSTEM_JUSTICE,
-    # ),
+    InspectDeontologyDataset(
+        name="deontology",
+        target_map={
+            1: "Reasonable",
+            0: "Unreasonable",
+        },
+        system_prompt=prompts.SYSTEM_DEONTOLOGY,
+        mcq_format=prompts.deontology_format(),
+    ),
+    InspectBasicLabelDataset(
+        name="justice",
+        target_map={
+            1: "Reasonable",
+            0: "Unreasonable",
+        },
+        input_column_name="scenario",
+        system_prompt=prompts.SYSTEM_JUSTICE,
+    ),
     InspectUtilitarianismDataset(
         name="utilitarianism",
         system_prompt=prompts.SYSTEM_UTILITARIANISM,

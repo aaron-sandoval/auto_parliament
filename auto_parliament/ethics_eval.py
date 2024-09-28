@@ -3,6 +3,7 @@ from datetime import datetime
 from functools import cache
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import json
 
 from autogen import AssistantAgent, ChatResult
@@ -81,23 +82,26 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
         for log_name in dataset_log_names:
             with open(log_name, "r", encoding="utf-8") as f:
                 dataset_logs.append(json.load(f))
+
+        # Load questiosn and targets
         num_samples = get_num_samples(dataset_logs[0])
         df = pd.DataFrame(
             columns=["question", "target"] + single_llm_names,
-            dtype=float,
+            dtype=np.float16,
             index=range(1, get_num_samples(dataset_logs[0]) + 1),
         )
-        df["question"] = df["question"].astype(str)
-        df["target"] = df["target"].astype(str)
+        df["question"] = [sample["input"] for sample in dataset_logs[0]["samples"]]
+        df["target"] = [sample["target"] for sample in dataset_logs[0]["samples"]]
 
+        # Load scores
         for log, model_name in zip(dataset_logs, single_llm_names):
             if get_num_samples(log) != num_samples:
                 raise ValueError("All logs must have the same number of samples")
-            # model_name = get_model_name(log)
-            for i, sample in enumerate(log["eval"]["dataset"]["samples"]):
-                df.loc[i+1, "question"] = sample["input"]
-                df.loc[i+1, "target"] = sample["target"]
-                df.loc[i+1, model_name] = SCORE_TO_FLOAT[log["eval"]["scores"]["match"]["value"]]
+            if not all(sample["input"] == df["question"].iloc[i] for i, sample in enumerate(log["samples"])):
+                raise ValueError("Questions do not match")
+            if not all(sample["target"] == df["target"].iloc[i] for i, sample in enumerate(log["samples"])):
+                raise ValueError("Targets do not match")
+            df.loc[:, model_name] = [SCORE_TO_FLOAT[sample["scores"]["match"]["value"]] for sample in log["samples"]]
         dfs[dataset_name] = df
 
     return dfs
