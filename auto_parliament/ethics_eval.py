@@ -136,10 +136,11 @@ def postprocess_logs(
         log_dfs = load_eval_dfs()
     if parliaments is not None:
         log_dfs = concat_parliament_evs(log_dfs)
+        
     
 
 
 
 if __name__ == "__main__":
     single_llm_logs = get_latest_filenames()
-    postprocess_logs(single_llm_logs, compile_json_to_dfs=True)
+    postprocess_logs(single_llm_logs, compile_json_to_dfs=True, parliaments=single_llms.parliaments)

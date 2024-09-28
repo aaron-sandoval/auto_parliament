@@ -132,12 +132,12 @@ class ParliamentBasic:
 
 parliaments = [
     ParliamentBasic(
-        beliefs=[BASE, UTIL],
-        credences=[.5, .5],
+        beliefs=[BASE, UTIL, VIRT, CATH],
+        credences=[.25, .25, .25, .25],
     ),
     ParliamentBasic(
-        beliefs=[BASE, UTIL],
-        credences=[.8, .2],
+        beliefs=[BASE, UTIL, VIRT, CATH],
+        credences=[.15, .5, .3, .05],
     ),
 ]
 
