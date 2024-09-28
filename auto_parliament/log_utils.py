@@ -79,6 +79,17 @@ def get_latest_filenames(log_dir: Path = EVAL_LOG_DIR, only_latest_run: bool = F
         raise NotImplementedError("Only latest run not implemented")
 
 def save_eval_dfs(dfs: dict[str, pd.DataFrame]):
+    dt: str = datetime.now().isoformat(timespec='minutes').replace(':', '')
+    analysis_dir = ANALYSIS_LOG_DIR / dt
+    analysis_dir.mkdir(parents=True, exist_ok=True)
     for dataset_name, df in dfs.items():
-        df.to_pickle(ANALYSIS_LOG_DIR/f"{datetime.now().strftime('%Y%m%d-%H%M%S')}_{dataset_name}.pkl")
+        df.to_pickle(analysis_dir/f"{dataset_name}.pkl")
 
+
+def load_eval_dfs() -> dict[str, pd.DataFrame]:
+    analysis_dir = sorted(ANALYSIS_LOG_DIR.iterdir(), key=os.path.getmtime)[-1]
+    dfs = {}
+    for pkl_file in analysis_dir.glob('*.pkl'):
+        dataset_name = pkl_file.stem
+        dfs[dataset_name] = pd.read_pickle(pkl_file)
+    return dfs

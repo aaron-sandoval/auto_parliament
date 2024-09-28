@@ -107,14 +107,24 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
     return dfs
 
 
-def postprocess_logs(single_llm_logs: list[Path], parliaments: list[ParliamentBasic]):
+def postprocess_logs(
+        single_llm_logs: list[Path], 
+        parliaments: list[ParliamentBasic] | None = None,
+        compile_json_to_dfs: bool = True,
+        ):
     """
     Args:
         single_llm_logs: List of Paths to single LLM logs.
         credences: List of dictionaries containing the credence values for each belief.
     """
-    log_dfs: dict[str, pd.DataFrame] = logs_to_dfs(single_llm_logs)
-    save_eval_dfs(log_dfs)
+    if compile_json_to_dfs:
+        log_dfs: dict[str, pd.DataFrame] = logs_to_dfs(single_llm_logs)
+        save_eval_dfs(log_dfs)
+    else:
+        log_dfs = load_eval_dfs()
+    if parliaments is not None:
+
+
 
 
 if __name__ == "__main__":
