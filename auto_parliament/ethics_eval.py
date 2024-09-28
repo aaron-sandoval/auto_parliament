@@ -1,10 +1,12 @@
-from typing import Literal, Any
+from typing import Literal, Any, TypeVar, Callable
 from datetime import datetime
 from functools import cache
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
+from dataclasses import dataclass
+from functools import cached_property
 
 from autogen import AssistantAgent, ChatResult
 from inspect_ai import Task, eval
@@ -137,10 +139,88 @@ def postprocess_logs(
     if parliaments is not None:
         log_dfs = concat_parliament_evs(log_dfs, parliaments)
         
+T = TypeVar("T")
+
+@dataclass
+class EvalAnalysis:
+    """
+    Class for analyzing the results of an evaluation.
+
+    Assumes that the log_dfs have already been concatenated with the parliaments.
+    Assumes that the log_dfs are built from eval data from the same single LLMs.
+    """
+    log_dfs: dict[str, pd.DataFrame]
+    parliaments: list[ParliamentBasic]
+    NUM_QUESTION_COLS: int = 2  # Number of columns for question data before single LLMs and parliaments
+
+    def __getattr__(self, key: str):
+        if key in self.log_dfs.keys():
+            return self.log_dfs[key]
+        super().__getattr__(key)
+
+
+    @property
+    def df1(self) -> pd.DataFrame:
+        """Get the first DataFrame in the log_dfs, for when any will do"""
+        return next(iter(self.log_dfs.values()))
+
+    @property
+    def num_single_llms(self) -> int:
+        """Number of columns for single LLMs in the evaluation
+        """
+        return len(self.df1.columns) - self.NUM_QUESTION_COLS - len(self.parliaments)
+
+    @property
+    def single_agent_llm_names(self) -> list[str]:
+        return list(self.df1.columns)[self.NUM_QUESTION_COLS:self.NUM_QUESTION_COLS+self.num_single_llms]
     
+    def map_over_datasets(self, func: Callable[[pd.DataFrame], T], datasets: list[str] | None = None) -> dict[str, T]:
+        """Apply a function to each DataFrame in log_dfs.
+        """
+        if datasets is None:
+            datasets = self.log_dfs.keys()
+        return {dataset: func(df) for dataset, df in self.log_dfs.items() if dataset in datasets}
 
+    def get_cols(self, cols: list[str]) -> dict[str, pd.DataFrame]:
+        return {key: df.loc[:, cols] for key, df in self.log_dfs.items()}
 
+    def mean_over_questions(self, datasets: list[str] | None = None) -> dict[str, pd.DataFrame]:
+        if datasets is None:
+            datasets = self.log_dfs.keys()
+        return {dataset: df.iloc[:, self.NUM_QUESTION_COLS:].mean(axis=0) for dataset, df in self.log_dfs.items() if dataset in datasets}
 
+    def mean_over_single_llms(self, datasets: list[str] | None = None) -> dict[str, pd.DataFrame]:
+        """Mean score by all single LLMs for each dataset in `datasets`.
+        """
+        if datasets is None:
+            datasets = self.log_dfs.keys()
+        return {dataset: df.loc[:,self.single_agent_llm_names].mean(axis=1) for dataset, df in self.log_dfs.items() if dataset in datasets}
+
+    def question_performance_buckets(self, datasets: list[str] | None = None) -> dict[str, pd.DataFrame]:
+        """Returns DataFrames containing histogram data of the mean score for each question.
+        """
+        if datasets is None:
+            datasets = self.log_dfs.keys()
+        assert all(dataset in self.log_dfs.keys() for dataset in datasets)
+        mean_scores = self.mean_over_single_llms(datasets)
+        out = {}
+        for dataset in datasets:
+            means = mean_scores[dataset]
+            # Get unique values in means
+            unique_values = means.unique()
+            num_buckets = len(unique_values)
+
+            # Compute histogram buckets
+            hist, bin_edges = np.histogram(means, bins=num_buckets, range=(0, 1))
+            
+            # Create DataFrame with histogram data
+            out[dataset] = pd.DataFrame({
+                'bin_start': bin_edges[:-1],
+                'bin_end': bin_edges[1:],
+                'count': hist
+            })
+
+        
 if __name__ == "__main__":
     single_llm_logs = get_latest_filenames()
     postprocess_logs(single_llm_logs, compile_json_to_dfs=False, parliaments=single_llms.parliaments)
