@@ -26,6 +26,8 @@ from log_utils import (
     get_dataset_name, 
     get_model_name, 
     get_num_samples,
+    save_eval_dfs,
+    get_latest_filenames,
     SCORE_TO_FLOAT,
 )
 TEMPERATURE: float = 1.0
@@ -59,7 +61,7 @@ def run_eval(dataset: InspectHFDataset, model: single_llms.InspectModel) -> tupl
 
 
 def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
-    """Transforms a list of EvalLog and Path tuples into a list of DataFrames.
+    """Transforms a list of EvalLog paths into a list of DataFrames.
 
     Each DataFrame contains the following columns:
     - question: The question that was asked.
@@ -67,20 +69,19 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
     - <model_name>: Variable number of columns, each with the score given by a model.
     Returns a list of DataFrames, one for each dataset.
     """
-    log_jsons: list[dict[str, Any]] = []
-    for log_file in single_llm_logs:
-        with open(log_file, "r") as f:
-            log_jsons.append(json.load(f))
-
-        log = EvalLog.load(log_file)
-        assert log.status == "success", f"Log {log_file} is not successful"
     single_llm_names = list({get_model_name(log) for log, _ in single_llm_logs})
     single_llm_names.sort()
     dataset_names = list({get_dataset_name(log) for log, _ in single_llm_logs})
+    dataset_names.sort()
 
     dfs = {}
     for dataset_name in dataset_names:
-        dataset_logs = [log for log, _ in single_llm_logs if get_dataset_name(log) == dataset_name]
+        dataset_log_names = [log for log, _ in single_llm_logs if get_dataset_name(log) == dataset_name]
+        dataset_logs: list[dict[str, Any]] = []
+        for log_name in dataset_log_names:
+            with open(log_name, "r") as f:
+                dataset_logs.append(json.load(f))
+        num_samples = get_num_samples(dataset_logs[0])
         df = pd.DataFrame(
             columns=["question", "target"] + single_llm_names,
             dtype=float,
@@ -90,6 +91,8 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
         df["target"] = df["target"].astype(str)
 
         for log in dataset_logs:
+            if get_num_samples(log) != num_samples:
+                raise ValueError("All logs must have the same number of samples")
             model_name = get_model_name(log)
             for i, sample in enumerate(log.eval.dataset.samples):
                 df.loc[i, "question"] = sample.input
@@ -103,8 +106,13 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
 def postprocess_logs(single_llm_logs: list[Path], parliaments: list[ParliamentBasic]):
     """
     Args:
-        single_llm_logs: List of tuples containing EvalLog and Path for each single LLM log.
+        single_llm_logs: List of Paths to single LLM logs.
         credences: List of dictionaries containing the credence values for each belief.
     """
     log_dfs: dict[str, pd.DataFrame] = logs_to_dfs(single_llm_logs)
-    
+    save_eval_dfs(log_dfs)
+
+
+if __name__ == "__main__":
+    single_llm_logs = get_latest_filenames()
+    logs_to_dfs(single_llm_logs)
