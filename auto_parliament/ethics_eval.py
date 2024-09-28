@@ -69,17 +69,17 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
     - <model_name>: Variable number of columns, each with the score given by a model.
     Returns a list of DataFrames, one for each dataset.
     """
-    single_llm_names = list({get_model_name(log) for log, _ in single_llm_logs})
+    single_llm_names = list({get_model_name(log) for log in single_llm_logs})
     single_llm_names.sort()
-    dataset_names = list({get_dataset_name(log) for log, _ in single_llm_logs})
+    dataset_names = list({get_dataset_name(log) for log in single_llm_logs})
     dataset_names.sort()
 
     dfs = {}
     for dataset_name in dataset_names:
-        dataset_log_names = [log for log, _ in single_llm_logs if get_dataset_name(log) == dataset_name]
+        dataset_log_names = [log for log in single_llm_logs if get_dataset_name(log) == dataset_name]
         dataset_logs: list[dict[str, Any]] = []
         for log_name in dataset_log_names:
-            with open(log_name, "r") as f:
+            with open(log_name, "r", encoding="utf-8") as f:
                 dataset_logs.append(json.load(f))
         num_samples = get_num_samples(dataset_logs[0])
         df = pd.DataFrame(
@@ -90,14 +90,14 @@ def logs_to_dfs(single_llm_logs: list[Path]) -> dict[str, pd.DataFrame]:
         df["question"] = df["question"].astype(str)
         df["target"] = df["target"].astype(str)
 
-        for log in dataset_logs:
+        for log, model_name in zip(dataset_logs, single_llm_names):
             if get_num_samples(log) != num_samples:
                 raise ValueError("All logs must have the same number of samples")
-            model_name = get_model_name(log)
-            for i, sample in enumerate(log.eval.dataset.samples):
-                df.loc[i, "question"] = sample.input
-                df.loc[i, "target"] = sample.target
-                df.loc[i, model_name] = SCORE_TO_FLOAT[log.eval.scores.match.value]
+            # model_name = get_model_name(log)
+            for i, sample in enumerate(log["eval"]["dataset"]["samples"]):
+                df.loc[i+1, "question"] = sample["input"]
+                df.loc[i+1, "target"] = sample["target"]
+                df.loc[i+1, model_name] = SCORE_TO_FLOAT[log["eval"]["scores"]["match"]["value"]]
         dfs[dataset_name] = df
 
     return dfs

@@ -57,12 +57,12 @@ def get_model_name(log_path: Path) -> str:
     return log_path.parent.name
 
 def get_num_samples(log: dict[str, Any]) -> int:
-    return log.eval.dataset.samples
+    return log["eval"]["dataset"]["samples"]
 
-def get_questions(log: EvalLog) -> list[str]:
-    return [sample.input for sample in log.eval.dataset.samples]
+def get_questions(log: dict[str, Any]) -> list[str]:
+    return [sample["input"] for sample in log["eval"]["dataset"]["samples"]]
 
-def get_targets(log: EvalLog) -> list[str]:
+def get_targets(log: dict[str, Any]) -> list[str]:
     return [sample.target for sample in log.eval.dataset.samples]
 
 def get_latest_filenames(log_dir: Path = EVAL_LOG_DIR, only_latest_run: bool = False) -> list[Path]:
