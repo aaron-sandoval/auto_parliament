@@ -122,13 +122,20 @@ class ParliamentBasic:
     credences: list[float]
 
     @property
+    def belief_abbvs(self) -> list[str]:
+        return [belief.abbv for belief in self.beliefs]
+    
+    @property
+    def belief_names(self) -> list[str]:
+        return [belief.belief_name for belief in self.beliefs]
+
+    @property
     def name(self) -> str:
-        return "_".join([f"{belief.abbv}{credence:.2f}" for belief, credence in zip(self.beliefs, self.credences)])
+        return "_".join([f"{belief.abbv}{int(credence*100):02d}" for belief, credence in zip(self.beliefs, self.credences)])
 
     def get_expected_values(self, eval_df: pd.DataFrame) -> pd.DataFrame:
-        eval_df[self.name] = np.dot(eval_df[self.beliefs], self.credences)
-        return eval_df
-
+        return pd.Series(eval_df[self.belief_names] @ self.credences, name=self.name)
+        
 
 parliaments = [
     ParliamentBasic(

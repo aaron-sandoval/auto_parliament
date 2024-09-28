@@ -113,7 +113,7 @@ def concat_parliament_evs(log_dfs: dict[str, pd.DataFrame], parliaments: list[Pa
     """
     for df in log_dfs.values():
         for parliament in parliaments:
-            df = parliament.get_expected_values(df)
+            df[parliament.name] = parliament.get_expected_values(df)
     return log_dfs
 
 
@@ -135,7 +135,7 @@ def postprocess_logs(
     else:
         log_dfs = load_eval_dfs()
     if parliaments is not None:
-        log_dfs = concat_parliament_evs(log_dfs)
+        log_dfs = concat_parliament_evs(log_dfs, parliaments)
         
     
 
@@ -143,4 +143,4 @@ def postprocess_logs(
 
 if __name__ == "__main__":
     single_llm_logs = get_latest_filenames()
-    postprocess_logs(single_llm_logs, compile_json_to_dfs=True, parliaments=single_llms.parliaments)
+    postprocess_logs(single_llm_logs, compile_json_to_dfs=False, parliaments=single_llms.parliaments)

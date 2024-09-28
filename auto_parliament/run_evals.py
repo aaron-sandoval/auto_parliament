@@ -28,7 +28,7 @@ if RUN_EVAL:
 
     print("************\nAll done!\n************")
     log_dir = str(EVAL_LOG_DIR)
-    !inspect view start --log-dir $log_dir --port 7575
+    # !inspect view start --log-dir $log_dir --port 7575
 
 # %%
 # Postprocess logs to augment with model parliaments
