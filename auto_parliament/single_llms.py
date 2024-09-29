@@ -148,7 +148,7 @@ parliaments = [
     ),
 ]
 
-names_to_abbvs: dict = {model.name: model.abbv for model in inspect_models}
+names_to_abbvs: dict = {model.belief_name: model.abbv for model in inspect_models}
 
 
 if __name__ == "___main__" and False:

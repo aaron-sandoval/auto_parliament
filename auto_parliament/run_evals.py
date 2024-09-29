@@ -1,10 +1,7 @@
 # %%
 import os
-from dotenv import load_dotenv
 from pathlib import Path
 import itertools
-
-from inspect_ai.log import EvalLog
 
 from ethics_eval import (
     run_eval, 
@@ -53,5 +50,5 @@ if RUN_PLOTS:
         print(f"No `aug_dfs` in memory, reading latest logs from disk.")
         aug_dfs = load_eval_dfs()
         analysis = EvalAnalysis(log_dfs=aug_dfs, parliaments=parliaments)
-    analysis.plot_all()
+    analysis.generate_plots(show_plots=True)
 

@@ -10,10 +10,11 @@ from copy import deepcopy
 
 from inspect_ai.log import EvalLog
 
-EVAL_LOG_DIR = Path(".")/"data"/"eval_logs"
-EVAL_DF_DIR = Path(".")/"data"/"eval_dfs"
-EVAL_AUG_DIR = Path(".")/"data"/"eval_aug_dfs"
-PLOTS_DIR = Path(".")/"data"/"plots"
+ROOT_DIR = Path(__file__).parent.parent
+EVAL_LOG_DIR = ROOT_DIR/"data"/"eval_logs"
+EVAL_DF_DIR = ROOT_DIR/"data"/"eval_dfs"
+EVAL_AUG_DIR = ROOT_DIR/"data"/"eval_aug_dfs"
+PLOTS_DIR = ROOT_DIR/"data"/"plots"
 
 SCORE_TO_FLOAT = {
     "I": 0.0,
