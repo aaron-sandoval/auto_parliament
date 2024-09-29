@@ -2,6 +2,7 @@ from typing import Sequence, Any
 import json
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
 from datetime import datetime
 from pathlib import Path
 from autogen import ChatResult, AssistantAgent
@@ -12,6 +13,7 @@ from inspect_ai.log import EvalLog
 EVAL_LOG_DIR = Path(".")/"data"/"eval_logs"
 EVAL_DF_DIR = Path(".")/"data"/"eval_dfs"
 ANALYSIS_DF_DIR = Path(".")/"data"/"analysis_dfs"
+PLOTS_DIR = Path(".")/"data"/"plots"
 
 SCORE_TO_FLOAT = {
     "I": 0.0,
@@ -99,3 +101,10 @@ def load_eval_dfs(eval_df_dir: Path | None = None) -> dict[str, pd.DataFrame]:
         dataset_name = pkl_file.stem
         dfs[dataset_name] = pd.read_pickle(pkl_file)
     return dfs
+
+def save_plots(plots: dict[str, plt.Figure], plot_dir: Path = PLOTS_DIR) -> Path:
+    plot_dir = plot_dir/datetime.now().isoformat(timespec='minutes').replace(':', '')
+    plot_dir.mkdir(parents=True, exist_ok=True)
+    for name, plot in plots.items():
+        plot.savefig(plot_dir/f"{name}.png")
+    return plot_dir

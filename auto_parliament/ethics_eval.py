@@ -4,6 +4,7 @@ from functools import cache
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import json
 from dataclasses import dataclass
 from functools import cached_property
@@ -32,8 +33,11 @@ from log_utils import (
     save_eval_dfs,
     load_eval_dfs,
     get_latest_filenames,
+    save_plots,
     SCORE_TO_FLOAT,
 )
+import plotting
+
 TEMPERATURE: float = 1.0
 
 
@@ -183,6 +187,20 @@ class EvalAnalysis:
             assert all(dataset in self.log_dfs.keys() for dataset in datasets)
         return {dataset: func(df) for dataset, df in self.log_dfs.items() if dataset in datasets}
 
+    def generate_plots(
+            self, 
+            show_plots: bool = False,
+            ) -> list[plt.Figure]:
+        """Calls all analysis and plotting functions and saves the results to the plots directory.
+        """
+        figs = {
+            "model_performance_by_dataset": self.model_performance_by_dataset(show_plot=show_plots)[1],
+            "score_cdf": self.question_performance_buckets(show_plot=show_plots)[1],
+            "covariance_among_beliefs": self.covariance_among_beliefs(show_plot=show_plots)[1],
+        }
+        save_plots(figs)
+        
+
     def get_cols(self, cols: list[str]) -> dict[str, pd.DataFrame]:
         return {key: df.loc[:, cols] for key, df in self.log_dfs.items()}
 
@@ -198,7 +216,12 @@ class EvalAnalysis:
             datasets = self.log_dfs.keys()
         return {dataset: df.loc[:,self.single_agent_llm_names].mean(axis=1) for dataset, df in self.log_dfs.items() if dataset in datasets}
 
-    def question_performance_buckets(self, datasets: list[str] | None = None) -> dict[str, pd.Series]:
+    def question_performance_buckets(
+            self, 
+            datasets: list[str] | None = None, 
+            return_plot: bool = True,
+            show_plot: bool = False,
+            ) -> dict[str, pd.Series] | tuple[dict[str, pd.DataFrame], plt.Figure]:
         """Returns DataFrames containing histogram data of the mean score for each question.
         """
         if datasets is None:
@@ -221,8 +244,19 @@ class EvalAnalysis:
                 'bin_end': bin_edges[1:],
                 'count': hist
             })
+        
+        if return_plot:
+            fig = plotting.plot_cdfs(out, show=show_plot)
+            return out, fig
+        else:
+            return out
 
-    def model_performance_by_dataset(self, datasets: list[str] | None = None) -> pd.DataFrame:
+    def model_performance_by_dataset(
+            self, 
+            datasets: list[str] | None = None, 
+            return_plot: bool = True,
+            show_plot: bool = False,
+            ) -> pd.DataFrame | tuple[pd.DataFrame, plt.Figure]:
         """Returns a DataFrame with the mean score for each model (columns) for each dataset (rows).
         """
         if datasets is None:
@@ -232,9 +266,19 @@ class EvalAnalysis:
         out = pd.DataFrame(columns=self.single_agent_llm_names, index=means.keys())
         for dataset, series in means.items():
             out.loc[dataset] = series
-        return out
 
-    def covariance_over_questions(self, datasets: list[str] | None = None) -> pd.DataFrame:
+        if return_plot:
+            fig = plotting.plot_model_performance_by_dataset(out, show=show_plot)
+            return out, fig
+        else:
+            return out
+
+    def covariance_among_beliefs(
+            self, 
+            datasets: list[str] | None = None,
+            return_plot: bool = True,
+            show_plot: bool = False,
+            ) -> pd.DataFrame | tuple[pd.DataFrame, plt.Figure]:
         """Returns a DataFrame with the dot product of each model's scores in question space.
         """
         if datasets is None:
@@ -242,9 +286,13 @@ class EvalAnalysis:
         def dot_product_matrix_normalized(df: pd.DataFrame) -> pd.DataFrame:
             return pd.DataFrame(df[self.single_agent_llm_names].transpose() @ df[self.single_agent_llm_names]) / len(df)
 
-        return self.map_over_datasets(dot_product_matrix_normalized, datasets)
-        
-        
+        cov = self.map_over_datasets(dot_product_matrix_normalized, datasets)
+        if return_plot:
+            fig = plotting.plot_covariance_among_beliefs(cov, show=show_plot)
+            return cov, fig
+        else:
+            return cov
+
 if __name__ == "__main__":
     single_llm_logs = get_latest_filenames()
     postprocess_logs(single_llm_logs, compile_json_to_dfs=False, parliaments=single_llms.parliaments)
