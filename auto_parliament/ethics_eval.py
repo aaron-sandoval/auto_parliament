@@ -34,6 +34,8 @@ from log_utils import (
     load_eval_dfs,
     get_latest_filenames,
     save_plots,
+    save_eval_aug_dfs,
+    load_eval_aug_dfs,
     SCORE_TO_FLOAT,
 )
 import plotting
@@ -127,7 +129,7 @@ def postprocess_logs(
         single_llm_logs: list[Path] | None = None, 
         parliaments: list[ParliamentBasic] | None = None,
         compile_json_to_dfs: bool = True,
-        ):
+        ) -> dict[str, pd.DataFrame]:
     """
     Args:
         single_llm_logs: List of Paths to single LLM logs.
@@ -140,8 +142,11 @@ def postprocess_logs(
         save_eval_dfs(log_dfs)
     else:
         log_dfs = load_eval_dfs()
+    retval = log_dfs
     if parliaments is not None:
         log_dfs = concat_parliament_evs(log_dfs, parliaments)
+        retval = save_eval_aug_dfs(log_dfs)
+    return retval
         
 T = TypeVar("T")
 

@@ -12,7 +12,7 @@ from inspect_ai.log import EvalLog
 
 EVAL_LOG_DIR = Path(".")/"data"/"eval_logs"
 EVAL_DF_DIR = Path(".")/"data"/"eval_dfs"
-ANALYSIS_DF_DIR = Path(".")/"data"/"analysis_dfs"
+EVAL_AUG_DIR = Path(".")/"data"/"eval_aug_dfs"
 PLOTS_DIR = Path(".")/"data"/"plots"
 
 SCORE_TO_FLOAT = {
@@ -101,6 +101,26 @@ def load_eval_dfs(eval_df_dir: Path | None = None) -> dict[str, pd.DataFrame]:
         dataset_name = pkl_file.stem
         dfs[dataset_name] = pd.read_pickle(pkl_file)
     return dfs
+
+
+def save_eval_aug_dfs(dfs: dict[str, pd.DataFrame]) -> Path:
+    dt: str = datetime.now().isoformat(timespec='minutes').replace(':', '')
+    eval_df_dir = EVAL_AUG_DIR / dt
+    eval_df_dir.mkdir(parents=True, exist_ok=True)
+    for dataset_name, df in dfs.items():
+        df.to_pickle(eval_df_dir/f"{dataset_name}.pkl")
+    return eval_df_dir
+
+
+def load_eval_aug_dfs(eval_df_dir: Path | None = None) -> dict[str, pd.DataFrame]:
+    if eval_df_dir is None:
+        eval_df_dir = sorted(EVAL_AUG_DIR.iterdir(), key=os.path.getmtime)[-1]
+    dfs = {}
+    for pkl_file in eval_df_dir.glob('*.pkl'):
+        dataset_name = pkl_file.stem
+        dfs[dataset_name] = pd.read_pickle(pkl_file)
+    return dfs
+
 
 def save_plots(plots: dict[str, plt.Figure], plot_dir: Path = PLOTS_DIR) -> Path:
     plot_dir = plot_dir/datetime.now().isoformat(timespec='minutes').replace(':', '')
