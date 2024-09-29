@@ -1,4 +1,5 @@
 # %%
+import json
 import os
 import pandas as pd
 from pathlib import Path
@@ -52,5 +53,8 @@ if RUN_POSTPROCESS:
 if RUN_PLOTS:
     aug_dfs: dict[str, pd.DataFrame] = load_eval_aug_dfs()
     analysis = EvalAnalysis(log_dfs=aug_dfs, parliaments=parliaments)
-    analysis.generate_plots(show_plots=True)
+    # analysis.generate_plots(show_plots=True)
 
+# %%
+# Misc analysis
+    

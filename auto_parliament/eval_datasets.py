@@ -59,6 +59,14 @@ class InspectHFDataset:
     def record_to_sample_object(self, record: dict[str, Any]) -> Sample:
         pass
 
+    @staticmethod
+    def get_question_from_log(eval_log: dict, index: int) -> str:
+        return eval_log["samples"][index-1]["input"]
+
+    @staticmethod
+    def get_target_from_log(eval_log: dict, index: int) -> str:
+        return eval_log["samples"][index-1]["target"]
+
 @dataclass
 class InspectBasicLabelDataset(InspectHFDataset):
     path: str = "hendrycks/ethics"

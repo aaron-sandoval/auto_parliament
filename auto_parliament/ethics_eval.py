@@ -23,7 +23,7 @@ from inspect_ai.solver import (
 )
 
 import single_llms
-from eval_datasets import InspectHFDataset
+from eval_datasets import InspectHFDataset, ethics_datasets
 import prompts
 from single_llms import ParliamentBasic
 from log_utils import (
@@ -267,7 +267,7 @@ class EvalAnalysis:
             dtype=np.float16,
         )
         for dataset, series in means.items():
-            out.loc[dataset] = series
+            out.loc[dataset] = series.astype(np.float16)
 
         if return_plot:
             fig = plotting.plot_model_performance_by_dataset(out, show=show_plot)
@@ -296,8 +296,51 @@ class EvalAnalysis:
             return cov, fig
         else:
             return cov
+        
+    def sample_questions_by_avg_score(
+            self, 
+            datasets: list[str] | None = None, 
+            avg_score: float = 0.0,
+            epsilon: float = 0.01,
+            sample_size: int = 2,
+        ) -> dict[str, list[tuple[str, str]]]:
+        if datasets is None:
+            datasets = self.log_dfs.keys()
+        assert all(dataset in self.log_dfs.keys() for dataset in datasets)
+        question_means = self.mean_over_single_llms(datasets)
+        eval_files: list[Path] = get_latest_filenames()
+        out = {}
+        for dataset, series in question_means.items():
+            # Filter series to values within epsilon of avg_score
+            filtered_series = series[
+                (series >= avg_score - epsilon) & 
+                (series <= avg_score + epsilon)
+            ]
+            
+            # Sample from the filtered series
+            if not filtered_series.empty:
+                sampled_indices = filtered_series.sample(
+                    n=min(sample_size, len(filtered_series))
+                ).index.tolist()
+            else:
+                sampled_indices = []
+            eval_file = next((file for file in eval_files if dataset in str(file)))
+            with open(eval_file, "r", encoding="utf-8") as f:
+                eval_dict = json.load(f)
+            ds: InspectHFDataset = [d for d in ethics_datasets if d.name == dataset][0]
+            questions, targets = [], []
+            for index in sampled_indices:
+                questions.append(ds.get_question_from_log(eval_dict, index))
+                targets.append(ds.get_target_from_log(eval_dict, index))
+            out[dataset] = (questions, targets)
+        return out
 
 if __name__ == "__main__":
     aug_dfs: dict[str, pd.DataFrame] = load_eval_aug_dfs()
     analysis = EvalAnalysis(log_dfs=aug_dfs, parliaments=single_llms.parliaments)
-    analysis.generate_plots(show_plots=True)
+    sampled_hard_questions = analysis.sample_questions_by_avg_score(["justice"], 0.0, sample_size=3)
+    for dataset, (questions, targets) in sampled_hard_questions.items():
+        print(f"************\n{dataset}\n************")
+        for q, a in zip(questions, targets):
+            print(f"Question: {q}\nTarget: {a}\n")
+        print()

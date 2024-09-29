@@ -21,14 +21,15 @@ def plot_cdfs(
     for dataset, series in value_counts.items():
         cumsum_normalized = series.values.cumsum() / series.values.sum()
         plt.plot(series.index, cumsum_normalized, label=dataset)
-    plt.xticks(series.index, series.index, rotation=45, ha='right')
+    plt.xticks(series.index, series.index)
     plt.xlim(0, 1)  # Assuming scores are between 0 and 1
     plt.ylim(0, 1)  # CDF values are always between 0 and 1
     plt.title('Cumulative Distribution of Mean Scores')
     plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xlabel('Mean Score')
+    plt.xlabel('Question Mean Score')
     plt.ylabel('CDF')
     plt.legend()
+    fig.tight_layout()
     if show:
         plt.show()
     return fig
@@ -44,9 +45,9 @@ def plot_model_performance_by_dataset(
         model_performance: DataFrame with model performance data.
     """
     model_performance.rename(names_to_abbvs, axis=1, inplace=True)
-    fig = plt.figure(figsize=DEFAULT_FIGSIZE)
+    fig = plt.figure(figsize=(7, 5))
     plt.imshow(model_performance.values, cmap='YlOrRd', aspect='auto', interpolation='nearest')
-    plt.colorbar(label='Score')
+    # plt.colorbar(label='Score')
     
     # Set x-axis (model names) labels
     plt.xticks(range(len(model_performance.columns)), model_performance.columns, rotation=45, ha='right')
@@ -58,7 +59,7 @@ def plot_model_performance_by_dataset(
     for i in range(len(model_performance.index)):
         for j in range(len(model_performance.columns)):
             text_color = 'white' if model_performance.iloc[i, j] > 0.85 else 'black'
-            plt.text(j, i, f'{model_performance.iloc[i, j]:.3f}',
+            plt.text(j, i, f'{model_performance.iloc[i, j]:.2f}',
                      ha='center', va='center', color=text_color, weight='bold')
     
     plt.title('Belief System Score by Dataset')
@@ -82,7 +83,7 @@ def plot_covariance_among_beliefs(
     if reduce_over_datasets:
         covariance = sum(covariance_by_dataset.values()) / n
         plt.imshow(covariance, cmap='YlOrRd', aspect='auto', interpolation='nearest')
-        plt.colorbar(label='Covariance')
+        # plt.colorbar(label='Covariance')
         plt.xticks(range(len(covariance.columns)), covariance.columns, rotation=45, ha='right')
         plt.yticks(range(len(covariance.index)), covariance.index)
         # Add text annotations in each cell

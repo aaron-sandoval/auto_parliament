@@ -131,7 +131,7 @@ def save_plots(plots: dict[str, plt.Figure], plot_dir: Path = PLOTS_DIR, formats
     for name, plot in plots.items():
         if "png" in formats:
             png_filename = plot_dir/f"{name}.png"
-            plot.savefig(png_filename)
+            plot.savefig(png_filename, bbox_inches='tight', pad_inches=0.1)
         if "pkl" in formats:
             fig_filename = plot_dir/f"{name}.pkl"
             with open(fig_filename, 'wb') as file:
