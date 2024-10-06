@@ -1,5 +1,5 @@
 import pytest
-from auto_parliament.custom_inspect_elements import match_str
+from ethics_eval.custom_inspect_elements import match_str
 
 
 @pytest.mark.parametrize(
